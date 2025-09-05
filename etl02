@@ -1,0 +1,401 @@
+# Complete ETL System Flow - End-to-End
+
+## 🔄 **System Flow Overview**
+
+```mermaid
+graph TB
+    A[User/Client] --> B[FastAPI Endpoint]
+    B --> C[Authentication & Authorization]
+    C --> D[Workflow Validation]
+    D --> E[Background Task Submission]
+    E --> F[Prefect Flow Creation]
+    F --> G[Task Registry Lookup]
+    G --> H[Dependency Graph Building]
+    H --> I[Topological Sort Execution]
+    I --> J[Individual Task Execution]
+    J --> K[State Management & Monitoring]
+    K --> L[Result Storage & Cleanup]
+    
+    subgraph "Task Execution Detail"
+        J1[Extract Task] --> J2[Transform Task] --> J3[Load Task]
+    end
+    
+    subgraph "Monitoring & State"
+        K1[Redis State Store]
+        K2[Prometheus Metrics]
+        K3[Logging System]
+    end
+```
+
+## 📋 **Detailed Flow Steps**
+
+### **Phase 1: Request Initiation**
+
+#### **Step 1: API Request**
+```python
+# Client sends POST request to /workflows
+POST /workflows
+Headers: {
+    "Authorization": "Bearer jwt-token",
+    "Content-Type": "application/json"
+}
+Body: {
+    "name": "Customer Data Pipeline",
+    "nodes": [
+        {
+            "id": "extract_customers",
+            "type": "postgres_extract",
+            "params": {"table": "customers"},
+            "depends_on": []
+        },
+        {
+            "id": "transform_data",
+            "type": "expression_transform",
+            "params": {"upper_columns": ["name"]},
+            "depends_on": ["extract_customers"]
+        },
+        {
+            "id": "load_data",
+            "type": "mysql_load", 
+            "params": {"table": "processed_customers"},
+            "depends_on": ["transform_data"]
+        }
+    ]
+}
+```
+
+#### **Step 2: API Processing (`api/main.py`)**
+```python
+@app.post("/workflows")
+async def create_workflow(
+    workflow_config: WorkflowConfig,
+    background_tasks: BackgroundTasks,
+    current_user = Depends(get_current_user)
+):
+    # 1. Validate JWT token
+    # 2. Check user permissions
+    # 3. Validate workflow configuration
+    # 4. Submit to background processing
+    
+    background_tasks.add_task(execute_workflow_from_config, workflow_config)
+    return {"workflow_id": workflow_config.id, "status": "submitted"}
+```
+
+### **Phase 2: Workflow Orchestration**
+
+#### **Step 3: Workflow Execution Initialization (`workflow_runs.py`)**
+```python
+async def execute_workflow_from_config(workflow_config: WorkflowConfig):
+    executor = WorkflowExecutor()
+    
+    # 1. Initialize state management
+    await state_manager.initialize()
+    
+    # 2. Set workflow status to RUNNING
+    await state_manager.set_workflow_status(workflow_id, TaskStatus.RUNNING)
+    
+    # 3. Create and execute Prefect flow
+    flow_result = await executor._run_prefect_flow(workflow_config)
+```
+
+#### **Step 4: Dynamic Prefect Flow Creation**
+```python
+def _create_dynamic_flow(self, workflow_config: WorkflowConfig):
+    @flow(name=f"workflow_{workflow_config.id}")
+    async def dynamic_etl_flow():
+        # 1. Build dependency graph using NetworkX
+        dependency_graph = self._build_dependency_graph(workflow_config.nodes)
+        
+        # 2. Validate DAG structure (no cycles)
+        if not nx.is_directed_acyclic_graph(dependency_graph):
+            raise WorkflowExecutionError("Circular dependencies detected")
+        
+        # 3. Execute nodes in topological order
+        execution_results = {}
+        
+        for node_id in nx.topological_sort(dependency_graph):
+            # Get node configuration
+            node_config = get_node_by_id(workflow_config.nodes, node_id)
+            
+            # Get input data from predecessors
+            predecessors = list(dependency_graph.predecessors(node_id))
+            input_dataframes = [execution_results[pred] for pred in predecessors]
+            
+            # Execute the task
+            task_result = await self._execute_single_task(
+                node_config, input_dataframes, workflow_id, logger
+            )
+            
+            execution_results[node_id] = task_result.data
+    
+    return dynamic_etl_flow
+```
+
+### **Phase 3: Task Registry and Discovery**
+
+#### **Step 5: Task Lookup (`task_registry.py`)**
+```python
+async def _execute_single_task(self, node_config, input_dataframes, workflow_id, logger):
+    # 1. Get task from registry
+    prefect_task = self.task_registry.get_prefect_task(node_config.type.value)
+    
+    # 2. Execute Prefect task wrapper
+    task_result = await prefect_task(
+        inputs=input_dataframes,
+        workflow_id=workflow_id,
+        node_id=node_config.id,
+        params=node_config.params
+    )
+    
+    return task_result
+```
+
+#### **Step 6: Task Registration Flow**
+```python
+# Auto-discovery at startup
+def auto_discover_tasks():
+    # Import all task modules (triggers @register_task decorators)
+    from connectors.postgres import extract as pg_extract
+    from connectors.mysql import extract as mysql_extract
+    from transformations import expression
+    
+# Task registration via decorator
+@register_task(ExtractTask, "postgres_extract")
+class PostgresExtractTask(ExtractTask):
+    # Task implementation
+```
+
+### **Phase 4: Individual Task Execution**
+
+#### **Step 7: Task Execution Flow (`core/task.py`)**
+```python
+# Prefect task wrapper created by factory
+@task(name=task_name, retries=3, retry_delay_seconds=60)
+async def prefect_task_wrapper(inputs, workflow_id, node_id, params):
+    # 1. Create task context
+    context = TaskContext(workflow_id, node_id, task_name, params, logger)
+    
+    # 2. Create task instance
+    task_instance = task_class()
+    
+    # 3. Run with full monitoring
+    result = await task_instance.run_with_monitoring(inputs, context)
+    
+    return result
+
+# Base task execution with monitoring
+async def run_with_monitoring(self, inputs, context):
+    try:
+        # Pre-execution setup
+        await self.pre_execute(context)
+        
+        # Parameter validation
+        if not self.validate_params(context.params):
+            raise TaskValidationError("Invalid parameters")
+        
+        # Execute the actual task logic
+        result = await self.execute(inputs, context)
+        
+        # Post-execution cleanup and metrics
+        await self.post_execute(context, result, success=True)
+        
+        return TaskResult(status=COMPLETED, data=result, ...)
+        
+    except Exception as e:
+        await self.post_execute(context, None, success=False, error=str(e))
+        return TaskResult(status=FAILED, error=str(e), ...)
+```
+
+### **Phase 5: Specific Task Implementations**
+
+#### **Step 8A: PostgreSQL Extract Task (`connectors/postgres/extract.py`)**
+```python
+@register_task(ExtractTask, "postgres_extract")
+class PostgresExtractTask(ExtractTask):
+    async def extract_data(self, context: TaskContext) -> pl.DataFrame:
+        # 1. Build SQL query from parameters
+        query = self._build_query(context.params, context)
+        
+        # 2. Get database URL from settings
+        db_url = self.settings.POSTGRES_URL
+        
+        # 3. Execute query using Polars with ConnectorX
+        df = pl.read_database_uri(
+            query=query,
+            uri=db_url,
+            engine="connectorx"
+        )
+        
+        # 4. Add metadata
+        context.add_metadata("rows_extracted", len(df))
+        context.add_metadata("columns_extracted", list(df.columns))
+        
+        # 5. Log success
+        context.logger.info(f"Extracted {len(df)} rows from PostgreSQL")
+        
+        return df
+```
+
+#### **Step 8B: Expression Transform Task (`transformations/expression.py`)**
+```python
+@register_task(TransformTask, "expression_transform")
+class ExpressionTransformTask(TransformTask):
+    async def transform_data(self, df: pl.DataFrame, context: TaskContext) -> pl.DataFrame:
+        result_df = df.clone()
+        
+        # 1. Apply upper case transformations
+        if context.params.get("upper_columns"):
+            result_df = self._apply_upper_columns(result_df, context.params["upper_columns"])
+        
+        # 2. Apply complex expressions
+        if context.params.get("expressions"):
+            result_df = await self._apply_expressions(result_df, context.params["expressions"])
+        
+        # 3. Apply other transformations...
+        
+        # 4. Add metadata
+        context.add_metadata("transformations_applied", ["upper_columns"])
+        context.add_metadata("rows_processed", len(result_df))
+        
+        return result_df
+```
+
+#### **Step 8C: MySQL Load Task (`connectors/mysql/load.py`)**
+```python
+@register_task(LoadTask, "mysql_load")
+class MySQLLoadTask(LoadTask):
+    async def load_data(self, df: pl.DataFrame, context: TaskContext) -> None:
+        # 1. Get connection details
+        table = context.params["table"]
+        mode = context.params.get("mode", "replace")
+        db_url = self.settings.MYSQL_URL
+        
+        # 2. Load data using Polars
+        df.write_database(
+            table_name=table,
+            connection=db_url,
+            engine="adbc",
+            if_table_exists=mode
+        )
+        
+        # 3. Add metadata
+        context.add_metadata("rows_loaded", len(df))
+        context.add_metadata("target_table", table)
+        
+        # 4. Log success
+        context.logger.info(f"Loaded {len(df)} rows to MySQL table {table}")
+```
+
+### **Phase 6: State Management and Monitoring**
+
+#### **Step 9: State Updates (`core/monitoring.py`)**
+```python
+# Throughout execution, state is updated:
+
+# Task starts
+await state_manager.set_task_status(
+    workflow_id, node_id, TaskStatus.RUNNING
+)
+
+# Task completes
+await state_manager.set_task_status(
+    workflow_id, node_id, TaskStatus.COMPLETED,
+    metadata={"duration": 45.2, "rows_processed": 1000}
+)
+
+# Workflow completes
+await state_manager.set_workflow_status(
+    workflow_id, TaskStatus.COMPLETED,
+    metadata={"total_duration": 120.5, "nodes_executed": 3}
+)
+```
+
+#### **Step 10: Metrics Collection**
+```python
+# Metrics are recorded throughout execution
+metrics.record_task_duration(workflow_id, node_id, task_type, duration)
+metrics.increment_task_counter(workflow_id, task_type, status)
+metrics.workflow_counter.labels(status=TaskStatus.COMPLETED.value).inc()
+```
+
+### **Phase 7: Result Access and Monitoring**
+
+#### **Step 11: Status Monitoring**
+```python
+# Client can check status
+GET /workflows/{workflow_id}/status
+Response: {
+    "workflow_id": "abc123",
+    "status": "running",
+    "updated_at": "2024-01-01T12:00:00Z",
+    "task_statuses": {
+        "extract_customers": "completed",
+        "transform_data": "running", 
+        "load_data": "pending"
+    }
+}
+
+# Individual task status
+GET /workflows/{workflow_id}/tasks/{task_id}/status
+Response: {
+    "task_id": "transform_data",
+    "status": "running",
+    "duration": 23.5,
+    "rows_processed": 1000,
+    "metadata": {...}
+}
+```
+
+## 🔍 **Data Flow Through System**
+
+### **Example: Customer Data Pipeline**
+
+```python
+# 1. Raw Data (PostgreSQL)
+customers_df = pl.DataFrame({
+    "id": [1, 2, 3],
+    "first_name": ["john", "jane", "bob"],
+    "last_name": ["doe", "smith", "wilson"],
+    "email": ["john@email.com", "jane@email.com", "bob@email.com"]
+})
+
+# 2. After Expression Transform (uppercase names)
+transformed_df = pl.DataFrame({
+    "id": [1, 2, 3],
+    "first_name": ["JOHN", "JANE", "BOB"],
+    "last_name": ["DOE", "SMITH", "WILSON"], 
+    "email": ["john@email.com", "jane@email.com", "bob@email.com"]
+})
+
+# 3. Loaded to MySQL (final destination)
+# Data successfully written to processed_customers table
+```
+
+## 🏗️ **System Components Interaction**
+
+### **Component Communication Flow:**
+1. **FastAPI** receives request → validates → submits to background
+2. **WorkflowExecutor** creates Prefect flow → manages execution
+3. **TaskRegistry** provides task implementations → enables discovery
+4. **Prefect** orchestrates execution → handles retries/failures
+5. **Redis** stores state → enables real-time monitoring
+6. **Polars** processes data → high-performance transformations
+7. **Database Connectors** interface with sources/destinations
+8. **Metrics System** collects performance data → enables observability
+
+## 📊 **Execution Timeline Example**
+
+```
+Time: 00:00 - Workflow submitted via API
+Time: 00:01 - Prefect flow created and started
+Time: 00:02 - extract_customers task begins
+Time: 00:15 - extract_customers completes (1M rows extracted)
+Time: 00:16 - transform_data task begins
+Time: 00:45 - transform_data completes (transformations applied)
+Time: 00:46 - load_data task begins 
+Time: 01:20 - load_data completes (data written to MySQL)
+Time: 01:21 - Workflow marked as completed
+Time: 01:21 - Final metrics recorded and cleanup
+```
+
+This flow demonstrates how the system seamlessly orchestrates complex data workflows while providing real-time monitoring, error handling, and scalability.
