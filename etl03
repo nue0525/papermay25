@@ -1,0 +1,427 @@
+# Detailed Sequence Diagram - Workflow Execution
+
+## 🔄 **Complete Execution Sequence**
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant FastAPI
+    participant Auth
+    participant WorkflowExecutor
+    participant PrefectFlow
+    participant TaskRegistry
+    participant PostgresTask
+    participant TransformTask
+    participant MySQLTask
+    participant Redis
+    participant Prometheus
+    participant Database
+
+    Note over Client,Database: Workflow Submission Phase
+    Client->>FastAPI: POST /workflows (workflow_config)
+    FastAPI->>Auth: validate_jwt_token(token)
+    Auth-->>FastAPI: user_info
+    FastAPI->>FastAPI: validate_workflow_config()
+    FastAPI->>WorkflowExecutor: execute_workflow_from_config() [background]
+    FastAPI-->>Client: {"workflow_id": "abc123", "status": "submitted"}
+
+    Note over WorkflowExecutor,Database: Workflow Initialization Phase
+    WorkflowExecutor->>Redis: initialize_state_manager()
+    WorkflowExecutor->>Redis: set_workflow_status(RUNNING)
+    WorkflowExecutor->>PrefectFlow: create_dynamic_flow()
+    PrefectFlow->>PrefectFlow: build_dependency_graph()
+    PrefectFlow->>PrefectFlow: validate_dag_structure()
+    PrefectFlow->>PrefectFlow: topological_sort()
+
+    Note over PrefectFlow,Database: Task Execution Phase - Extract
+    PrefectFlow->>TaskRegistry: get_prefect_task("postgres_extract")
+    TaskRegistry-->>PrefectFlow: postgres_extract_task
+    PrefectFlow->>PostgresTask: execute(inputs=[], params={table: "customers"})
+    
+    PostgresTask->>Redis: set_task_status(RUNNING)
+    PostgresTask->>PostgresTask: validate_params()
+    PostgresTask->>Database: pl.read_database_uri(query, postgres_url)
+    Database-->>PostgresTask: DataFrame[1000 rows]
+    PostgresTask->>Redis: set_task_status(COMPLETED, metadata)
+    PostgresTask->>Prometheus: record_metrics(duration, rows)
+    PostgresTask-->>PrefectFlow: TaskResult(data=DataFrame)
+
+    Note over PrefectFlow,Database: Task Execution Phase - Transform
+    PrefectFlow->>TaskRegistry: get_prefect_task("expression_transform")
+    TaskRegistry-->>PrefectFlow: expression_transform_task
+    PrefectFlow->>TransformTask: execute(inputs=[DataFrame], params={upper_columns: ["name"]})
+    
+    TransformTask->>Redis: set_task_status(RUNNING)
+    TransformTask->>TransformTask: validate_params()
+    TransformTask->>TransformTask: apply_upper_columns()
+    TransformTask->>TransformTask: apply_other_transforms()
+    TransformTask->>Redis: set_task_status(COMPLETED, metadata)
+    TransformTask->>Prometheus: record_metrics(duration, rows)
+    TransformTask-->>PrefectFlow: TaskResult(data=TransformedDataFrame)
+
+    Note over PrefectFlow,Database: Task Execution Phase - Load
+    PrefectFlow->>TaskRegistry: get_prefect_task("mysql_load")
+    TaskRegistry-->>PrefectFlow: mysql_load_task
+    PrefectFlow->>MySQLTask: execute(inputs=[TransformedDataFrame], params={table: "output"})
+    
+    MySQLTask->>Redis: set_task_status(RUNNING)
+    MySQLTask->>MySQLTask: validate_params()
+    MySQLTask->>Database: df.write_database(table, mysql_url)
+    Database-->>MySQLTask: Success
+    MySQLTask->>Redis: set_task_status(COMPLETED, metadata)
+    MySQLTask->>Prometheus: record_metrics(duration, rows)
+    MySQLTask-->>PrefectFlow: TaskResult(data=None)
+
+    Note over WorkflowExecutor,Database: Workflow Completion Phase
+    PrefectFlow-->>WorkflowExecutor: workflow_completed
+    WorkflowExecutor->>Redis: set_workflow_status(COMPLETED)
+    WorkflowExecutor->>Prometheus: increment_workflow_counter(COMPLETED)
+
+    Note over Client,Database: Status Monitoring (Parallel)
+    Client->>FastAPI: GET /workflows/abc123/status
+    FastAPI->>Redis: get_workflow_status(abc123)
+    Redis-->>FastAPI: status_data
+    FastAPI-->>Client: WorkflowStatusResponse
+```
+
+## 📋 **Step-by-Step Code Flow**
+
+### **1. API Request Handler**
+```python
+# api/main.py
+@app.post("/workflows")
+async def create_workflow(workflow_config: WorkflowConfig, background_tasks: BackgroundTasks):
+    # Step 1: Authentication
+    current_user = await security_manager.authenticate_user(credentials)
+    
+    # Step 2: Authorization
+    if not security_manager.authorize_workflow(current_user, workflow_config.id):
+        raise HTTPException(403, "Insufficient permissions")
+    
+    # Step 3: Validation
+    is_valid, errors = validate_workflow_config(workflow_config)
+    if not is_valid:
+        raise HTTPException(400, f"Invalid config: {errors}")
+    
+    # Step 4: Background submission
+    background_tasks.add_task(execute_workflow_from_config, workflow_config)
+    
+    return {"workflow_id": workflow_config.id, "status": "submitted"}
+```
+
+### **2. Workflow Execution Initiation**
+```python
+# workflow_runs.py
+async def execute_workflow_from_config(workflow_config: WorkflowConfig) -> str:
+    executor = WorkflowExecutor()
+    
+    try:
+        # Initialize state management
+        await executor.state_manager.initialize()
+        
+        # Set workflow status
+        await executor.state_manager.set_workflow_status(
+            workflow_config.id, TaskStatus.RUNNING
+        )
+        
+        # Create and execute Prefect flow
+        flow_result = await executor._run_prefect_flow(workflow_config)
+        
+        return workflow_config.id
+        
+    except Exception as e:
+        await executor.state_manager.set_workflow_status(
+            workflow_config.id, TaskStatus.FAILED, {"error": str(e)}
+        )
+        raise WorkflowExecutionError(f"Workflow failed: {e}")
+```
+
+### **3. Dynamic Prefect Flow Creation**
+```python
+# workflow_runs.py - WorkflowExecutor._create_dynamic_flow()
+@flow(name=f"workflow_{workflow_config.id}")
+async def dynamic_etl_flow():
+    logger = get_run_logger()
+    workflow_id = workflow_config.id
+    
+    try:
+        # Build dependency graph
+        dependency_graph = self._build_dependency_graph(workflow_config.nodes)
+        
+        # Validate DAG
+        if not nx.is_directed_acyclic_graph(dependency_graph):
+            raise WorkflowExecutionError("Circular dependencies")
+        
+        # Execute in topological order
+        execution_results = {}
+        
+        for node_id in nx.topological_sort(dependency_graph):
+            # Get node configuration
+            node_config = next(node for node in workflow_config.nodes if node.id == node_id)
+            
+            # Get input data from predecessors
+            predecessors = list(dependency_graph.predecessors(node_id))
+            input_dataframes = [execution_results[pred] for pred in predecessors if pred in execution_results]
+            
+            # Execute the task
+            logger.info(f"Executing node {node_id} of type {node_config.type}")
+            
+            task_result = await self._execute_single_task(
+                node_config, input_dataframes, workflow_id, logger
+            )
+            
+            if task_result.status == TaskStatus.COMPLETED:
+                execution_results[node_id] = task_result.data
+            else:
+                raise TaskExecutionError(f"Task {node_id} failed: {task_result.error}")
+        
+        # Mark workflow as completed
+        await self.state_manager.set_workflow_status(
+            workflow_id, TaskStatus.COMPLETED
+        )
+        
+        return {"workflow_id": workflow_id, "status": TaskStatus.COMPLETED}
+        
+    except Exception as e:
+        await self.state_manager.set_workflow_status(
+            workflow_id, TaskStatus.FAILED, {"error": str(e)}
+        )
+        raise
+```
+
+### **4. Task Registry Lookup and Execution**
+```python
+# workflow_runs.py - WorkflowExecutor._execute_single_task()
+async def _execute_single_task(
+    self, node_config: NodeConfig, input_dataframes: List[pl.DataFrame], 
+    workflow_id: str, logger: logging.Logger
+) -> TaskResult:
+    
+    try:
+        # Get Prefect task from registry
+        prefect_task = self.task_registry.get_prefect_task(node_config.type.value)
+        
+        if not prefect_task:
+            raise TaskExecutionError(f"Task type {node_config.type.value} not found")
+        
+        # Execute the Prefect task
+        task_result = await prefect_task(
+            inputs=input_dataframes,
+            workflow_id=workflow_id,
+            node_id=node_config.id,
+            params=node_config.params
+        )
+        
+        return task_result
+        
+    except Exception as e:
+        logger.error(f"Failed to execute task {node_config.id}: {e}")
+        
+        return TaskResult(
+            task_id=f"{workflow_id}_{node_config.id}",
+            workflow_id=workflow_id,
+            node_id=node_config.id,
+            status=TaskStatus.FAILED,
+            error=str(e)
+        )
+```
+
+### **5. Prefect Task Wrapper Execution**
+```python
+# core/task.py - create_prefect_task()
+@task(name=task_name, retries=3, retry_delay_seconds=60)
+async def prefect_task_wrapper(
+    inputs: List[pl.DataFrame],
+    workflow_id: str,
+    node_id: str,
+    params: Dict[str, Any]
+) -> TaskResult:
+    
+    # Get Prefect logger
+    logger = get_run_logger()
+    
+    # Create task context
+    context = TaskContext(
+        workflow_id=workflow_id,
+        node_id=node_id,
+        task_type=task_name,
+        params=params,
+        logger=logger
+    )
+    
+    # Create and run task instance
+    task_instance = task_class()
+    result = await task_instance.run_with_monitoring(inputs, context)
+    
+    return result
+```
+
+### **6. Individual Task Execution with Monitoring**
+```python
+# core/task.py - BaseETLTask.run_with_monitoring()
+async def run_with_monitoring(
+    self, inputs: List[pl.DataFrame], context: TaskContext
+) -> TaskResult:
+    
+    try:
+        # Pre-execution setup
+        await self.pre_execute(context)
+        
+        # Validate parameters
+        if not self.validate_params(context.params):
+            raise TaskValidationError("Invalid parameters")
+        
+        # Execute the task logic
+        result = await self.execute(inputs, context)
+        
+        # Post-execution cleanup
+        await self.post_execute(context, result, success=True)
+        
+        return TaskResult(
+            task_id=f"{context.workflow_id}_{context.node_id}",
+            workflow_id=context.workflow_id,
+            node_id=context.node_id,
+            status=TaskStatus.COMPLETED,
+            data=result,
+            metadata=context.metadata,
+            start_time=context.start_time,
+            end_time=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        await self.post_execute(context, None, success=False, error=str(e))
+        
+        return TaskResult(
+            task_id=f"{context.workflow_id}_{context.node_id}",
+            workflow_id=context.workflow_id,
+            node_id=context.node_id,
+            status=TaskStatus.FAILED,
+            error=str(e),
+            start_time=context.start_time,
+            end_time=datetime.utcnow()
+        )
+```
+
+### **7. Specific Task Implementation (PostgreSQL Extract)**
+```python
+# connectors/postgres/extract.py
+async def extract_data(self, context: TaskContext) -> pl.DataFrame:
+    try:
+        # Build query from parameters
+        query = self._build_query(context.params, context)
+        
+        # Get database URL
+        db_url = self.settings.POSTGRES_URL
+        
+        # Execute query using Polars
+        context.logger.info(f"Executing query: {query[:100]}...")
+        
+        df = pl.read_database_uri(
+            query=query,
+            uri=db_url,
+            engine="connectorx"
+        )
+        
+        # Add metadata
+        context.add_metadata("rows_extracted", len(df))
+        context.add_metadata("columns_extracted", list(df.columns))
+        context.add_metadata("query_executed", query)
+        
+        context.logger.info(f"Successfully extracted {len(df)} rows")
+        
+        return df
+        
+    except Exception as e:
+        error_msg = f"Failed to extract data: {str(e)}"
+        context.logger.error(error_msg)
+        raise TaskExecutionError(error_msg) from e
+```
+
+### **8. State Management and Monitoring Updates**
+```python
+# Throughout execution, state updates happen:
+
+# Before task execution
+async def pre_execute(self, context: TaskContext) -> None:
+    context.logger.info(f"Starting task {context.node_id}")
+    
+    await self.state_manager.set_task_status(
+        context.workflow_id,
+        context.node_id,
+        TaskStatus.RUNNING
+    )
+
+# After task execution
+async def post_execute(self, context: TaskContext, result, success: bool, error=None):
+    end_time = datetime.utcnow()
+    duration = (end_time - context.start_time).total_seconds()
+    
+    status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
+    
+    # Record metrics
+    self.metrics.record_task_duration(
+        context.workflow_id, context.node_id, context.task_type, duration
+    )
+    
+    # Update state
+    metadata = {
+        "duration": duration,
+        "end_time": end_time.isoformat(),
+        **context.metadata
+    }
+    
+    if error:
+        metadata["error"] = error
+    
+    await self.state_manager.set_task_status(
+        context.workflow_id, context.node_id, status, metadata
+    )
+```
+
+### **9. Status Monitoring API**
+```python
+# api/main.py
+@app.get("/workflows/{workflow_id}/status")
+async def get_workflow_status(workflow_id: str):
+    try:
+        status_data = await get_workflow_execution_status(workflow_id)
+        
+        if "error" in status_data:
+            if "not found" in status_data["error"].lower():
+                raise HTTPException(404, "Workflow not found")
+            else:
+                raise HTTPException(500, status_data["error"])
+        
+        return WorkflowStatusResponse(**status_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Failed to get status: {str(e)}")
+```
+
+## 🎯 **Key Execution Points**
+
+### **Async Execution Flow:**
+1. **Synchronous API Response** - Client gets immediate response
+2. **Asynchronous Workflow Execution** - Runs in background via Prefect
+3. **Real-time Status Updates** - Available via Redis state store
+4. **Parallel Task Execution** - Where dependencies allow
+5. **Automatic Retry Logic** - Built into Prefect tasks
+6. **Comprehensive Monitoring** - Metrics, logs, and state tracking
+
+### **Data Flow:**
+```
+Source DB → Polars DataFrame → Transform → Polars DataFrame → Target DB
+     ↓              ↓                ↓              ↓              ↓
+   Extract       Memory          Transform       Memory         Load
+    Task       Efficient         Task          Efficient       Task
+               Processing                      Processing
+```
+
+### **Error Handling:**
+- **Task Level**: Individual task failures are caught and recorded
+- **Workflow Level**: Failed workflows are marked and can be retried
+- **System Level**: Infrastructure issues trigger alerts and recovery
+
+This flow ensures robust, scalable, and monitorable data processing with clear separation of concerns and comprehensive error handling.
