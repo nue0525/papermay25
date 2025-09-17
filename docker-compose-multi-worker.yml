@@ -1,0 +1,208 @@
+# docker-compose-multi-worker.yml
+version: '3.8'
+
+services:
+  # Prefect Server
+  prefect-server:
+    image: prefecthq/prefect:2.15-python3.11
+    command: prefect server start --host 0.0.0.0 --port 4200
+    ports:
+      - "4200:4200"
+    environment:
+      - PREFECT_UI_URL=http://localhost:4200/ui
+      - PREFECT_API_URL=http://localhost:4200/api
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_LOGGING_LEVEL=INFO
+    volumes:
+      - prefect_data:/root/.prefect
+    networks:
+      - workflow_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prefect Worker 1 - General Purpose
+  prefect-worker-1:
+    image: prefecthq/prefect:2.15-python3.11
+    command: >
+      sh -c "
+        sleep 30 &&
+        prefect work-pool create default-agent-pool --type process --overwrite &&
+        prefect worker start --pool default-agent-pool --name worker-1 --limit 5
+      "
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+      - PREFECT_LOGGING_LEVEL=INFO
+      - WORKER_ID=1
+      - WORKER_TYPE=general
+    volumes:
+      - ./:/app
+      - prefect_data:/root/.prefect
+      - worker_1_data:/tmp/worker-1
+    working_dir: /app
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+    networks:
+      - workflow_network
+    restart: unless-stopped
+
+  # Prefect Worker 2 - ETL Focus
+  prefect-worker-2:
+    image: prefecthq/prefect:2.15-python3.11
+    command: >
+      sh -c "
+        sleep 35 &&
+        prefect work-pool create etl-pool --type process --overwrite &&
+        prefect worker start --pool etl-pool --name worker-2 --limit 3 --tags etl,database
+      "
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+      - PREFECT_LOGGING_LEVEL=INFO
+      - WORKER_ID=2
+      - WORKER_TYPE=etl
+    volumes:
+      - ./:/app
+      - prefect_data:/root/.prefect
+      - worker_2_data:/tmp/worker-2
+    working_dir: /app
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+    networks:
+      - workflow_network
+    restart: unless-stopped
+
+  # Prefect Worker 3 - High Memory Tasks
+  prefect-worker-3:
+    image: prefecthq/prefect:2.15-python3.11
+    command: >
+      sh -c "
+        sleep 40 &&
+        prefect work-pool create high-memory-pool --type process --overwrite &&
+        prefect worker start --pool high-memory-pool --name worker-3 --limit 2 --tags high-memory,analytics
+      "
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+      - PREFECT_LOGGING_LEVEL=INFO
+      - WORKER_ID=3
+      - WORKER_TYPE=high_memory
+    volumes:
+      - ./:/app
+      - prefect_data:/root/.prefect
+      - worker_3_data:/tmp/worker-3
+    working_dir: /app
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+    networks:
+      - workflow_network
+    restart: unless-stopped
+    # Allocate more memory for this worker
+    mem_limit: 2g
+    memswap_limit: 2g
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=neondb
+      - POSTGRES_USER=workflow_user
+      - POSTGRES_PASSWORD=workflow_password
+      - POSTGRES_MAX_CONNECTIONS=200
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - workflow_network
+    command: >
+      postgres 
+      -c max_connections=200 
+      -c shared_buffers=256MB 
+      -c effective_cache_size=1GB
+
+  # MongoDB
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=workflow_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - workflow_network
+
+  # Redis for worker coordination (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - workflow_network
+    command: redis-server --appendonly yes
+
+  # Worker Monitor (optional - for monitoring worker health)
+  worker-monitor:
+    image: prefecthq/prefect:2.15-python3.11
+    command: >
+      sh -c "
+        sleep 60 &&
+        python /app/worker_monitor.py
+      "
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    volumes:
+      - ./:/app
+      - prefect_data:/root/.prefect
+    depends_on:
+      - prefect-server
+      - prefect-worker-1
+      - prefect-worker-2
+      - prefect-worker-3
+    networks:
+      - workflow_network
+
+  # Your Application
+  workflow-app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=neondb
+      - POSTGRES_USER=workflow_user
+      - POSTGRES_PASSWORD=workflow_password
+      - MONGODB_URL=mongodb://mongodb:27017
+      - MONGODB_DATABASE=workflow_db
+      - PREFECT_API_URL=http://prefect-server:4200/api
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - mongodb
+      - prefect-server
+      - redis
+    volumes:
+      - ./:/app
+    networks:
+      - workflow_network
+
+volumes:
+  prefect_data:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  worker_1_data:
+  worker_2_data:
+  worker_3_data:
+
+networks:
+  workflow_network:
+    driver: bridge
