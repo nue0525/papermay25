@@ -1,0 +1,848 @@
+# API Security Best Practices for Enterprise SaaS
+
+## 🎯 GET vs POST: When to Use Each
+
+### The Golden Rules
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    HTTP METHOD DECISION TREE                     │
+└─────────────────────────────────────────────────────────────────┘
+
+Does the request contain sensitive data?
+│
+├─ YES → Use POST/PUT/PATCH (body)
+│   └─ Examples:
+│       ✓ Passwords, API keys, tokens
+│       ✓ Connector credentials (DB passwords, OAuth tokens)
+│       ✓ Personal information (SSN, credit card)
+│       ✓ Large payloads (workflow diagrams, file uploads)
+│
+└─ NO → Can use GET (query params)
+    └─ But consider:
+        ├─ Is it idempotent (safe to retry)?
+        │   └─ YES → GET is appropriate
+        │
+        ├─ Will it be logged/cached?
+        │   └─ Logs expose query params → Use POST if sensitive
+        │
+        ├─ Is payload > 2KB?
+        │   └─ YES → Use POST (URL length limits)
+        │
+        └─ Does it modify data?
+            └─ YES → Use POST/PUT/PATCH/DELETE (never GET)
+```
+
+---
+
+## 1. Security Comparison: Query Params vs Request Body
+
+### ❌ Security Issues with Query Parameters
+
+```python
+# ❌ BAD: Sensitive data in query params
+GET /api/users/login?username=admin&password=secret123
+GET /api/connectors/create?db_password=mypassword
+GET /api/payments/process?card_number=4111111111111111
+
+# Problems:
+# 1. Logged in server access logs
+# 2. Logged in browser history
+# 3. Cached by CDN/proxies
+# 4. Visible in network tab
+# 5. Leaked in Referer header
+# 6. Shared in copy-paste URL
+```
+
+**Where Query Params Are Exposed**:
+```
+Browser History:       ✓ Stored permanently
+Server Access Logs:    ✓ Apache/Nginx logs
+CDN/Proxy Logs:        ✓ Cloudflare, Akamai logs
+Browser DevTools:      ✓ Network tab visible
+Referer Header:        ✓ Sent to external sites
+Analytics Tools:       ✓ Google Analytics, Mixpanel
+SIEM Systems:          ✓ Security monitoring logs
+```
+
+### ✅ Request Body (POST/PUT/PATCH)
+
+```python
+# ✅ GOOD: Sensitive data in request body
+POST /api/users/login
+Content-Type: application/json
+{
+  "username": "admin",
+  "password": "secret123"
+}
+
+POST /api/connectors
+{
+  "connector_type": "postgresql",
+  "connection_config": {
+    "host": "db.example.com",
+    "username": "dbuser",
+    "password": "encrypted_password"  # Should be encrypted
+  }
+}
+
+# Benefits:
+# 1. NOT logged in access logs (usually)
+# 2. NOT in browser history
+# 3. NOT cached by CDN
+# 4. NOT in Referer header
+# 5. Can encrypt entire body
+```
+
+---
+
+## 2. Enterprise SaaS API Design Best Practices
+
+### Authentication & Authorization
+
+```python
+# ============================================================================
+# BEST PRACTICE: Separate authentication and payload
+# ============================================================================
+
+# ✅ Authentication in Header (ALWAYS)
+POST /api/workflows/{workflow_id}/execute
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
+  X-Subscription-ID: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+Body:
+  {
+    "parameters": {
+      "start_date": "2025-01-01",
+      "end_date": "2025-12-31"
+    }
+  }
+
+# ❌ NEVER put auth tokens in query params
+GET /api/workflows?token=eyJhbGc...  # BAD: Token in logs!
+```
+
+### REST API Method Guidelines
+
+```python
+# ============================================================================
+# HTTP METHODS BY OPERATION
+# ============================================================================
+
+# GET - Retrieve data (idempotent, cacheable)
+GET    /api/workflows                    # List workflows
+GET    /api/workflows/{id}               # Get workflow details
+GET    /api/workflows/{id}/executions    # List executions
+
+# Query params OK for:
+# - Pagination: ?page=1&limit=50
+# - Filtering: ?status=active&created_after=2025-01-01
+# - Sorting: ?sort=created_at&order=desc
+# - Search: ?q=customer_data
+
+# POST - Create new resource or non-idempotent operations
+POST   /api/workflows                    # Create workflow
+POST   /api/workflows/{id}/execute       # Execute workflow
+POST   /api/connectors/{id}/test         # Test connection
+POST   /api/users/login                  # Login (not idempotent)
+
+# PUT - Replace entire resource (idempotent)
+PUT    /api/workflows/{id}               # Replace entire workflow
+
+# PATCH - Partial update (idempotent)
+PATCH  /api/workflows/{id}               # Update specific fields
+
+# DELETE - Remove resource (idempotent)
+DELETE /api/workflows/{id}               # Delete workflow
+```
+
+---
+
+## 3. UZO Platform API Security Standards
+
+### Security Matrix for UZO Endpoints
+
+```python
+# ============================================================================
+# AUTHENTICATION ENDPOINTS
+# ============================================================================
+
+# ✅ POST (sensitive credentials in body)
+POST   /api/auth/register
+Body:  {"username": "...", "email": "...", "password": "..."}
+
+POST   /api/auth/login
+Body:  {"username": "...", "password": "..."}
+
+POST   /api/auth/refresh
+Body:  {"refresh_token": "..."}
+
+POST   /api/auth/reset-password
+Body:  {"token": "...", "new_password": "..."}
+
+# ============================================================================
+# CONNECTOR ENDPOINTS (Highly Sensitive - Contains DB Passwords!)
+# ============================================================================
+
+# ✅ POST for creation (credentials in encrypted body)
+POST   /api/connectors
+Body:  {
+  "connector_name": "Production DB",
+  "connector_type": "postgresql",
+  "connection_config": {
+    "host": "db.prod.example.com",
+    "port": 5432,
+    "username": "app_user",
+    "password": "encrypted:AES256:base64...",  # Client-side encrypted
+    "database": "app_db",
+    "ssl_mode": "require"
+  }
+}
+
+# ✅ GET for listing (no sensitive data)
+GET    /api/connectors?type=database&status=active
+
+# ✅ GET for details (credentials masked)
+GET    /api/connectors/{id}
+Response: {
+  "connector_id": "...",
+  "connector_name": "Production DB",
+  "connector_type": "postgresql",
+  "connection_config": {
+    "host": "db.prod.example.com",
+    "username": "app_user",
+    "password": "********",  # Masked in response
+    "database": "app_db"
+  }
+}
+
+# ✅ POST for testing (credentials in body, not logged)
+POST   /api/connectors/{id}/test
+Body:  {
+  "timeout_seconds": 10
+}
+
+# ============================================================================
+# WORKFLOW ENDPOINTS
+# ============================================================================
+
+# ✅ GET for listing (no sensitive data)
+GET    /api/workflows?job_id={id}&status=active
+
+# ✅ GET for details (ReactFlow diagram in response)
+GET    /api/workflows/{id}
+
+# ✅ POST for creation (large JSONB payload)
+POST   /api/workflows
+Body:  {
+  "workflow_name": "Customer ETL Pipeline",
+  "job_id": "...",
+  "workflow_diagram": {
+    "nodes": [...],  # Can be 100+ nodes
+    "edges": [...],  # Large payload
+    "viewport": {...}
+  }
+}
+
+# ✅ PATCH for updates (only changed fields)
+PATCH  /api/workflows/{id}
+Body:  {
+  "workflow_name": "Updated Name",
+  "workflow_diagram": {...}  # Can be very large
+}
+
+# ✅ POST for execution (parameters in body)
+POST   /api/workflows/{id}/execute
+Body:  {
+  "parameters": {
+    "start_date": "2025-01-01",
+    "batch_size": 10000,
+    "connector_overrides": {
+      "source_connector_id": "...",
+      "target_connector_id": "..."
+    }
+  },
+  "run_async": true
+}
+
+# ✅ DELETE for deletion
+DELETE /api/workflows/{id}?soft_delete=true
+
+# ============================================================================
+# LINEAGE ENDPOINTS (Premium Feature - Check Feature Flag)
+# ============================================================================
+
+# ✅ GET for querying (read-only, results can be large)
+GET    /api/lineage/assets/{id}/upstream?max_depth=15
+GET    /api/lineage/assets/{id}/downstream?max_depth=15
+GET    /api/lineage/assets/{id}/impact
+
+# ✅ POST for profiling (triggers background job)
+POST   /api/lineage/assets/{id}/profile
+Body:  {
+  "profile_columns": true,
+  "calculate_stats": true,
+  "sample_size": 100000
+}
+
+# ============================================================================
+# AUDIT & LOGGING ENDPOINTS
+# ============================================================================
+
+# ✅ GET for querying (filtered results)
+GET    /api/audit/logs?resource_type=workflow&action=DELETE&start_date=2025-01-01
+GET    /api/audit/executions?workflow_id={id}&status=failed
+GET    /api/audit/server?status_code=500&start_date=2025-01-01
+
+# ============================================================================
+# VERSION CONTROL ENDPOINTS
+# ============================================================================
+
+# ✅ GET for history
+GET    /api/workflows/{id}/versions
+
+# ✅ POST for versioning operations (state changes)
+POST   /api/workflows/{id}/versions
+Body:  {
+  "version_tag": "v2.0",
+  "version_description": "Added error handling",
+  "auto_publish": false
+}
+
+POST   /api/versions/{id}/checkout
+POST   /api/versions/{id}/checkin
+Body:  {
+  "comment": "Fixed data type mismatch in join node"
+}
+
+# ============================================================================
+# WEBSOCKET CONNECTION (JWT in query param - special case)
+# ============================================================================
+
+# ⚠️ Exception: WebSocket doesn't support headers
+WS     ws://api.uzo.com/ws?token=eyJhbGc...
+
+# Mitigation:
+# 1. Token is short-lived (5 minutes)
+# 2. Single-use token (invalidated after connection)
+# 3. Rotate token on reconnect
+# 4. Monitor for token reuse attempts
+```
+
+---
+
+## 4. Request/Response Encryption
+
+### Transport Layer Security
+
+```python
+# ============================================================================
+# ALWAYS USE HTTPS (TLS 1.3)
+# ============================================================================
+
+# ✅ HTTPS only (enforced by FastAPI middleware)
+https://api.uzo.com/api/workflows
+
+# ❌ HTTP not allowed
+http://api.uzo.com/api/workflows  # Redirects to HTTPS
+
+# FastAPI enforcement
+from fastapi import FastAPI
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+
+app = FastAPI()
+app.add_middleware(HTTPSRedirectMiddleware)
+```
+
+### Application-Level Encryption
+
+```python
+# ============================================================================
+# ENCRYPT SENSITIVE FIELDS IN DATABASE
+# ============================================================================
+
+from cryptography.fernet import Fernet
+import base64
+import os
+
+class EncryptionService:
+    """
+    Encrypt connector credentials before storing
+    """
+
+    def __init__(self):
+        # Load from environment (rotate monthly)
+        key = os.getenv("ENCRYPTION_KEY").encode()
+        self.cipher = Fernet(key)
+
+    def encrypt(self, plaintext: str) -> str:
+        """Encrypt string and return base64"""
+        encrypted = self.cipher.encrypt(plaintext.encode())
+        return base64.b64encode(encrypted).decode()
+
+    def decrypt(self, ciphertext: str) -> str:
+        """Decrypt base64 string"""
+        encrypted = base64.b64decode(ciphertext.encode())
+        return self.cipher.decrypt(encrypted).decode()
+
+
+# Usage in connector service
+class ConnectorService:
+
+    async def create_connector(
+        self,
+        connector_data: Dict[str, Any],
+        user_id: str
+    ):
+        # Encrypt sensitive fields
+        encryption_service = EncryptionService()
+
+        if "password" in connector_data["connection_config"]:
+            plaintext_password = connector_data["connection_config"]["password"]
+            encrypted_password = encryption_service.encrypt(plaintext_password)
+            connector_data["connection_config"]["password"] = encrypted_password
+
+        # Store in database
+        await db.execute(
+            """
+            INSERT INTO connectors (connector_id, connection_config, created_by)
+            VALUES ($1, $2, $3)
+            """,
+            connector_id, connector_data["connection_config"], user_id
+        )
+```
+
+---
+
+## 5. Input Validation & Sanitization
+
+### Pydantic Models for All Requests
+
+```python
+# ============================================================================
+# STRICT INPUT VALIDATION
+# ============================================================================
+
+from pydantic import BaseModel, Field, validator, constr
+from typing import Optional, Dict, Any
+from datetime import datetime
+import re
+
+# ✅ Validate all inputs with Pydantic
+class WorkflowCreateRequest(BaseModel):
+    workflow_name: constr(min_length=1, max_length=255)
+    job_id: str = Field(..., regex=r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$')
+    workflow_diagram: Dict[str, Any]
+    description: Optional[str] = Field(None, max_length=5000)
+
+    @validator('workflow_name')
+    def validate_name(cls, v):
+        # Prevent SQL injection, XSS
+        if re.search(r'[<>\'\"\\;]', v):
+            raise ValueError("Invalid characters in workflow name")
+        return v
+
+    @validator('workflow_diagram')
+    def validate_diagram(cls, v):
+        # Validate ReactFlow structure
+        if 'nodes' not in v or 'edges' not in v:
+            raise ValueError("Invalid workflow diagram structure")
+
+        # Limit nodes (prevent DoS)
+        if len(v['nodes']) > 1000:
+            raise ValueError("Maximum 1000 nodes per workflow")
+
+        return v
+
+    class Config:
+        # Prevent extra fields (security)
+        extra = 'forbid'
+
+
+# Usage in FastAPI
+@router.post("/api/workflows")
+async def create_workflow(
+    workflow_data: WorkflowCreateRequest,  # Auto-validated
+    current_user: dict = Depends(JWTBearer())
+):
+    # workflow_data is guaranteed to be valid
+    result = await workflow_service.create_workflow(
+        workflow_data.dict(),
+        current_user["user_id"]
+    )
+    return result
+```
+
+### SQL Injection Prevention
+
+```python
+# ============================================================================
+# ALWAYS USE PARAMETERIZED QUERIES
+# ============================================================================
+
+# ✅ GOOD: Parameterized (asyncpg automatically handles)
+async def get_workflow(workflow_id: str):
+    query = """
+    SELECT workflow_id, workflow_name, workflow_diagram
+    FROM workflows
+    WHERE workflow_id = $1
+    """
+    result = await conn.fetchrow(query, workflow_id)
+    return result
+
+# ❌ BAD: String interpolation (SQL injection!)
+async def get_workflow_bad(workflow_id: str):
+    query = f"""
+    SELECT * FROM workflows WHERE workflow_id = '{workflow_id}'
+    """
+    # Attacker can inject: workflow_id = "'; DROP TABLE workflows; --"
+    result = await conn.fetchrow(query)
+    return result
+
+# ✅ GOOD: Dynamic filters with parameterized queries
+async def search_workflows(filters: Dict[str, Any]):
+    where_clauses = []
+    params = []
+    param_counter = 1
+
+    if "workflow_name" in filters:
+        where_clauses.append(f"workflow_name ILIKE ${param_counter}")
+        params.append(f"%{filters['workflow_name']}%")
+        param_counter += 1
+
+    if "status" in filters:
+        where_clauses.append(f"status = ${param_counter}")
+        params.append(filters["status"])
+        param_counter += 1
+
+    where_sql = " AND ".join(where_clauses) if where_clauses else "TRUE"
+
+    query = f"""
+    SELECT * FROM workflows
+    WHERE {where_sql}
+    """
+
+    results = await conn.fetch(query, *params)
+    return results
+```
+
+---
+
+## 6. Rate Limiting & DDoS Protection
+
+### Redis-based Rate Limiter
+
+```python
+# ============================================================================
+# RATE LIMITING MIDDLEWARE
+# ============================================================================
+
+from fastapi import Request, HTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
+import time
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """
+    Rate limit requests per user/IP
+    """
+
+    def __init__(self, app, redis_client, limits: Dict[str, int]):
+        super().__init__(app)
+        self.redis = redis_client
+        self.limits = limits  # {"default": 100, "workflow_execute": 10}
+
+    async def dispatch(self, request: Request, call_next):
+        # Get rate limit key
+        user_id = getattr(request.state, "user_id", None)
+        ip_address = request.client.host
+
+        rate_limit_key = f"rate_limit:{user_id or ip_address}:{request.url.path}"
+
+        # Get endpoint-specific limit
+        endpoint = request.url.path
+        limit = self.limits.get(endpoint, self.limits["default"])
+
+        # Check rate limit (sliding window)
+        current_time = int(time.time())
+        window_start = current_time - 60  # 1 minute window
+
+        # Increment request count
+        await self.redis.zadd(rate_limit_key, {str(current_time): current_time})
+        await self.redis.zremrangebyscore(rate_limit_key, 0, window_start)
+        await self.redis.expire(rate_limit_key, 60)
+
+        # Check count
+        request_count = await self.redis.zcard(rate_limit_key)
+
+        if request_count > limit:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded. Max {limit} requests per minute."
+            )
+
+        response = await call_next(request)
+        return response
+
+
+# Apply to FastAPI app
+app.add_middleware(
+    RateLimitMiddleware,
+    redis_client=redis_client,
+    limits={
+        "default": 100,  # 100 requests/min
+        "/api/workflows/*/execute": 10,  # 10 executions/min
+        "/api/connectors/*/test": 5,  # 5 connection tests/min
+    }
+)
+```
+
+---
+
+## 7. Security Headers
+
+### FastAPI Security Middleware
+
+```python
+# ============================================================================
+# SECURITY HEADERS
+# ============================================================================
+
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+
+        # Prevent clickjacking
+        response.headers["X-Frame-Options"] = "DENY"
+
+        # Prevent MIME sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+
+        # XSS protection
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # Content Security Policy
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https:; "
+            "font-src 'self' data:; "
+            "connect-src 'self' wss://api.uzo.com"
+        )
+
+        # Strict Transport Security (HTTPS only)
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
+
+        # Referrer Policy
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        # Permissions Policy
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), microphone=(), camera=()"
+        )
+
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS (restrict to specific origins)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://app.uzo.com",
+        "https://staging.uzo.com"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+    expose_headers=["X-Request-ID", "X-Total-Count"]
+)
+```
+
+---
+
+## 8. Logging & Monitoring (Without Exposing Secrets)
+
+### Secure Logging
+
+```python
+# ============================================================================
+# LOG SANITIZATION
+# ============================================================================
+
+import logging
+import json
+import re
+
+class SecureLogger:
+    """
+    Logger that sanitizes sensitive data
+    """
+
+    SENSITIVE_KEYS = [
+        'password', 'token', 'secret', 'api_key', 'apikey',
+        'authorization', 'credentials', 'credit_card', 'ssn'
+    ]
+
+    @staticmethod
+    def sanitize(data: Any) -> Any:
+        """Recursively sanitize sensitive fields"""
+
+        if isinstance(data, dict):
+            return {
+                k: "***REDACTED***" if k.lower() in SecureLogger.SENSITIVE_KEYS
+                else SecureLogger.sanitize(v)
+                for k, v in data.items()
+            }
+        elif isinstance(data, list):
+            return [SecureLogger.sanitize(item) for item in data]
+        else:
+            return data
+
+    @staticmethod
+    def log_request(request: Request, response: Response):
+        """Log request/response without sensitive data"""
+
+        log_data = {
+            "request_id": request.state.request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "query_params": SecureLogger.sanitize(dict(request.query_params)),
+            "headers": {
+                k: v for k, v in request.headers.items()
+                if k.lower() not in ['authorization', 'cookie']
+            },
+            "status_code": response.status_code,
+            "user_id": getattr(request.state, "user_id", None)
+        }
+
+        # ✅ Safe to log (no passwords, tokens)
+        logging.info(json.dumps(log_data))
+
+
+# Usage in middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    response = await call_next(request)
+    SecureLogger.log_request(request, response)
+    return response
+```
+
+---
+
+## 9. Summary: UZO API Security Checklist
+
+### ✅ Security Checklist
+
+| Security Measure | Implementation | Status |
+|------------------|----------------|--------|
+| **HTTPS Only** | TLS 1.3, HSTS header | ✅ |
+| **Authentication** | JWT in Authorization header | ✅ |
+| **Sensitive Data** | POST body, never query params | ✅ |
+| **Credential Encryption** | Fernet encryption at rest | ✅ |
+| **Input Validation** | Pydantic models, regex validation | ✅ |
+| **SQL Injection Prevention** | Parameterized queries (asyncpg) | ✅ |
+| **XSS Prevention** | Content-Security-Policy header | ✅ |
+| **CSRF Protection** | SameSite cookies, CSRF tokens | ✅ |
+| **Rate Limiting** | Redis-based, per-user & per-endpoint | ✅ |
+| **CORS** | Whitelist specific origins only | ✅ |
+| **Security Headers** | X-Frame-Options, X-Content-Type-Options | ✅ |
+| **Audit Logging** | All actions logged (sanitized) | ✅ |
+| **Error Messages** | Generic errors (no stack traces) | ✅ |
+| **API Versioning** | /api/v1/... for backwards compat | ✅ |
+| **Request Size Limits** | 10MB max payload | ✅ |
+| **Timeout Limits** | 30s request timeout | ✅ |
+
+### 📋 Quick Reference: GET vs POST
+
+```python
+# ============================================================================
+# WHEN TO USE GET
+# ============================================================================
+✅ Retrieving data (read-only)
+✅ Filtering/sorting (non-sensitive)
+✅ Pagination
+✅ Idempotent operations
+✅ Cacheable results
+✅ Payload < 2KB
+
+# Examples:
+GET /api/workflows?status=active&sort=created_at
+GET /api/workflows/{id}
+GET /api/audit/logs?start_date=2025-01-01
+
+# ============================================================================
+# WHEN TO USE POST
+# ============================================================================
+✅ Creating resources
+✅ Executing operations (non-idempotent)
+✅ Sending sensitive data (passwords, tokens)
+✅ Large payloads (> 2KB)
+✅ File uploads
+✅ Search with complex filters
+
+# Examples:
+POST /api/auth/login                    # Credentials
+POST /api/workflows                     # Create (large diagram)
+POST /api/workflows/{id}/execute        # Execute
+POST /api/connectors                    # Create (DB password)
+POST /api/search                        # Complex search body
+
+# ============================================================================
+# WHEN TO USE PUT/PATCH
+# ============================================================================
+PUT   /api/workflows/{id}               # Replace entire workflow
+PATCH /api/workflows/{id}               # Update specific fields
+
+# ============================================================================
+# WHEN TO USE DELETE
+# ============================================================================
+DELETE /api/workflows/{id}              # Delete resource
+```
+
+---
+
+## 🎯 Final Recommendation for UZO
+
+### Standard Pattern
+
+```python
+# ============================================================================
+# UZO API STANDARD PATTERN
+# ============================================================================
+
+# 1. Authentication: ALWAYS in header
+Headers:
+  Authorization: Bearer {jwt_token}
+  X-Subscription-ID: {subscription_id}
+
+# 2. Resource IDs: In URL path
+GET    /api/workflows/{workflow_id}
+DELETE /api/workflows/{workflow_id}
+
+# 3. Filters/Pagination: Query params (non-sensitive)
+GET    /api/workflows?status=active&page=1&limit=50
+
+# 4. Create/Update: POST/PATCH with body
+POST   /api/workflows
+Body:  {workflow_name, workflow_diagram, ...}
+
+# 5. Sensitive Operations: POST with body
+POST   /api/auth/login
+Body:  {username, password}
+
+POST   /api/connectors
+Body:  {connector_type, connection_config: {password: "encrypted"}}
+
+# 6. Actions: POST with resource ID in path
+POST   /api/workflows/{id}/execute
+Body:  {parameters: {...}}
+```
+
+This is the enterprise-standard approach used by Stripe, AWS, GitHub, and other major SaaS platforms!
