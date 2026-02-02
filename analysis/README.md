@@ -39,8 +39,8 @@ The analysis now properly maps the node IDs to their actual relationships, showi
 
 
 erDiagram
-    %% ACH Transaction Processing - ER Diagram
-    %% 20 Tables | Schema: ach
+    %CH Transaction Processing - ER Diagram
+    %% 20 Tables | Schema: ch
 
     %% FILE RELATIONSHIPS
     FILE_BATCH ||--o{ FILE_RAW_RECORD : contains
