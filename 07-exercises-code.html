@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCA Hands-On Exercises & Code Patterns</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--bg-card:#FFF;--text:#1A1A1A;--text2:#555;--text3:#888;--border:#E8E4DE;--border-lt:#F0ECE6;--accent:#0F3460;--blue:#2B6CB0;--green:#276749;--red:#C53030;--purple:#6B46C1;--orange:#D4622B;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Source Serif 4',Georgia,serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.hero{background:linear-gradient(135deg,#0F3460 0%,#16213E 50%,#1A1A2E 100%);color:#fff;padding:60px 40px 48px}.hero-inner{max-width:1000px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);padding:5px 14px;border-radius:20px;font-family:Roboto;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:44px;font-weight:400;line-height:1.2;margin-bottom:12px}.hero-sub{font-size:18px;opacity:0.85;max-width:700px;font-weight:300}
+.container{max-width:1000px;margin:0 auto;padding:0 40px}.section{padding:48px 0;border-bottom:1px solid var(--border-lt)}.section:last-child{border:none}
+.stag{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange);margin-bottom:10px}
+h2{font-family:Roboto;font-size:28px;font-weight:700;margin-bottom:6px}h3{font-family:Roboto;font-size:20px;font-weight:600;margin:28px 0 14px}h4{font-family:Roboto;font-size:16px;font-weight:600;margin:20px 0 10px}
+.sdesc{font-size:17px;color:var(--text2);margin-bottom:32px;max-width:750px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}.card-t{font-family:Roboto;font-size:18px;font-weight:700;margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.info{padding:18px 22px;border-radius:10px;margin:18px 0;border-left:4px solid;font-size:14px;color:var(--text2)}
+.info.tip{background:#ECFDF5;border-color:var(--green)}.info.note{background:#EBF4FF;border-color:var(--blue)}
+.info-l{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.info.tip .info-l{color:var(--green)}.info.note .info-l{color:var(--blue)}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:#F0ECE6;padding:2px 6px;border-radius:4px}
+.code-block{background:#1E1E2E;border-radius:10px;margin:18px 0;overflow:hidden}
+.code-h{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#181825;border-bottom:1px solid #313244}
+.code-lang{font-family:Roboto;font-size:11px;font-weight:600;color:#CDD6F4}.code-dots{display:flex;gap:5px}.code-dots span{width:9px;height:9px;border-radius:50%}.code-dots span:nth-child(1){background:#F38BA8}.code-dots span:nth-child(2){background:#F9E2AF}.code-dots span:nth-child(3){background:#A6E3A1}
+pre{padding:18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:#CDD6F4;margin:0}
+.kw{color:#CBA6F7}.str{color:#A6E3A1}.fn{color:#89B4FA}.cm{color:#6C7086;font-style:italic}.num{color:#FAB387}
+.exercise{background:var(--bg-card);border:2px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:28px;border-left:5px solid var(--orange)}
+.exercise-num{font-family:'DM Serif Display',serif;font-size:36px;color:var(--orange);line-height:1;margin-bottom:8px}
+.exercise-title{font-family:Roboto;font-size:20px;font-weight:700;margin-bottom:8px}
+.exercise-domains{font-family:Roboto;font-size:12px;color:var(--text3);margin-bottom:14px}
+.step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-lt);font-size:14px;color:var(--text2)}.step:last-child{border:none}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Roboto;font-size:12px;font-weight:700;flex-shrink:0}
+.footer{background:#1A1A2E;color:rgba(255,255,255,.5);padding:32px;text-align:center;font-family:Roboto;font-size:12px}
+@media(max-width:768px){.hero{padding:40px 20px}.hero h1{font-size:30px}.container{padding:0 20px}.grid-2{grid-template-columns:1fr}}
+</style></head><body>
+
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">CCA Foundations · Practical Exercises</div>
+  <h1>Hands-On Exercises<br>& Code Patterns</h1>
+  <p class="hero-sub">4 official preparation exercises from the exam guide plus complete buildable code patterns. Build each one — the exam tests hands-on judgment, not memorization.</p>
+</div></header>
+
+<main class="container">
+
+<section class="section">
+<div class="stag">Official Exercises</div>
+<h2>4 Preparation Exercises from Exam Guide</h2>
+<p class="sdesc">The official exam guide includes these 4 exercises designed to build practical familiarity with exam topics. Each maps to multiple domains.</p>
+
+<div class="exercise">
+<div class="exercise-num">1</div>
+<div class="exercise-title">Build a Multi-Tool Agent with Escalation Logic</div>
+<div class="exercise-domains">Domains: D1 (Agentic Architecture) + D2 (Tool Design) + D5 (Context & Reliability)</div>
+<div class="step"><div class="step-num">1</div><div>Define 3-4 MCP tools with detailed, differentiated descriptions. Include at least 2 tools with similar functionality requiring careful description.</div></div>
+<div class="step"><div class="step-num">2</div><div>Implement agentic loop checking <code>stop_reason</code>. Handle both <code>"tool_use"</code> and <code>"end_turn"</code> correctly.</div></div>
+<div class="step"><div class="step-num">3</div><div>Add structured error responses: <code>errorCategory</code>, <code>isRetryable</code>, descriptions. Test agent handles each error type (retry transient, explain business).</div></div>
+<div class="step"><div class="step-num">4</div><div>Implement a PostToolUse hook blocking refunds > $500 and redirecting to escalation.</div></div>
+<div class="step"><div class="step-num">5</div><div>Test with multi-concern messages. Verify decomposition + unified response.</div></div>
+</div>
+
+<div class="code-block"><div class="code-h"><div class="code-lang">Python — Exercise 1: Complete Multi-Tool Agent</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre><span class="kw">import</span> anthropic, json
+
+client = anthropic.Anthropic()
+
+<span class="cm"># ── Step 1: Define differentiated tools ──</span>
+tools = [
+    {
+        <span class="str">"name"</span>: <span class="str">"get_customer"</span>,
+        <span class="str">"description"</span>: <span class="str">"""Retrieve verified customer profile by customer ID or email.
+Returns: customer_id, name, email, account_status, verification_level, tier.
+ALWAYS call this FIRST before any order lookups or refund operations.
+Do NOT use for order-specific queries — use lookup_order instead.
+Input: customer ID (CUST-XXXXX) or email address."""</span>,
+        <span class="str">"input_schema"</span>: {
+            <span class="str">"type"</span>: <span class="str">"object"</span>,
+            <span class="str">"properties"</span>: {<span class="str">"identifier"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>}},
+            <span class="str">"required"</span>: [<span class="str">"identifier"</span>]
+        }
+    },
+    {
+        <span class="str">"name"</span>: <span class="str">"lookup_order"</span>,
+        <span class="str">"description"</span>: <span class="str">"""Retrieve order details by order ID.
+Returns: order_id, status, items[], total, created_at, return_eligible.
+Requires verified customer_id from get_customer first.
+Input: order ID in format ORD-XXXXX only.
+Do NOT use customer names or emails — use get_customer for those."""</span>,
+        <span class="str">"input_schema"</span>: {
+            <span class="str">"type"</span>: <span class="str">"object"</span>,
+            <span class="str">"properties"</span>: {<span class="str">"order_id"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>}},
+            <span class="str">"required"</span>: [<span class="str">"order_id"</span>]
+        }
+    },
+    {
+        <span class="str">"name"</span>: <span class="str">"process_refund"</span>,
+        <span class="str">"description"</span>: <span class="str">"""Process a refund for a verified customer's order.
+Requires: verified customer_id AND order_id from prior tool calls.
+Refunds over $500 will be blocked by policy — escalate to human.
+Returns: refund_id, status, amount, estimated_arrival."""</span>,
+        <span class="str">"input_schema"</span>: {
+            <span class="str">"type"</span>: <span class="str">"object"</span>,
+            <span class="str">"properties"</span>: {
+                <span class="str">"customer_id"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>},
+                <span class="str">"order_id"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>},
+                <span class="str">"amount"</span>: {<span class="str">"type"</span>: <span class="str">"number"</span>},
+                <span class="str">"reason"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>}
+            },
+            <span class="str">"required"</span>: [<span class="str">"customer_id"</span>, <span class="str">"order_id"</span>, <span class="str">"amount"</span>]
+        }
+    },
+    {
+        <span class="str">"name"</span>: <span class="str">"escalate_to_human"</span>,
+        <span class="str">"description"</span>: <span class="str">"""Escalate to human agent with structured handoff.
+Use when: customer explicitly requests human, policy gap exists,
+or agent cannot make meaningful progress."""</span>,
+        <span class="str">"input_schema"</span>: {
+            <span class="str">"type"</span>: <span class="str">"object"</span>,
+            <span class="str">"properties"</span>: {
+                <span class="str">"customer_id"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>},
+                <span class="str">"summary"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>},
+                <span class="str">"root_cause"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>},
+                <span class="str">"recommended_action"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>}
+            },
+            <span class="str">"required"</span>: [<span class="str">"customer_id"</span>, <span class="str">"summary"</span>]
+        }
+    }
+]
+
+<span class="cm"># ── Step 2: Agentic loop with stop_reason ──</span>
+system_prompt = <span class="str">"""You are a customer support agent. Follow these rules:
+1. Always verify customer with get_customer BEFORE any order operations
+2. Decompose multi-issue messages into separate concerns
+3. Escalate immediately if: customer requests human, policy gap, no progress
+4. For straightforward issues (standard returns with evidence), resolve autonomously
+5. For complex issues (policy exceptions), escalate with structured handoff"""</span>
+
+<span class="kw">def</span> <span class="fn">run_agent</span>(user_message):
+    messages = [{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: user_message}]
+    verified_customer = <span class="num">None</span>
+
+    <span class="kw">while</span> <span class="num">True</span>:
+        response = client.messages.create(
+            model=<span class="str">"claude-sonnet-4-20250514"</span>,
+            max_tokens=<span class="num">4096</span>,
+            system=system_prompt,
+            tools=tools,
+            messages=messages
+        )
+
+        <span class="cm"># ✅ stop_reason drives the loop</span>
+        <span class="kw">if</span> response.stop_reason == <span class="str">"end_turn"</span>:
+            <span class="kw">return</span> response.content
+
+        <span class="kw">if</span> response.stop_reason == <span class="str">"tool_use"</span>:
+            messages.append({<span class="str">"role"</span>: <span class="str">"assistant"</span>, <span class="str">"content"</span>: response.content})
+
+            tool_results = []
+            <span class="kw">for</span> block <span class="kw">in</span> response.content:
+                <span class="kw">if</span> block.type == <span class="str">"tool_use"</span>:
+                    <span class="cm"># ── Step 4: Policy hook ──</span>
+                    <span class="kw">if</span> block.name == <span class="str">"process_refund"</span>:
+                        amount = block.input.get(<span class="str">"amount"</span>, <span class="num">0</span>)
+                        <span class="kw">if</span> amount > <span class="num">500</span>:
+                            tool_results.append({
+                                <span class="str">"type"</span>: <span class="str">"tool_result"</span>,
+                                <span class="str">"tool_use_id"</span>: block.id,
+                                <span class="str">"content"</span>: json.dumps({
+                                    <span class="str">"blocked"</span>: <span class="num">True</span>,
+                                    <span class="str">"reason"</span>: <span class="str">f"Refund ${amount} exceeds $500 threshold"</span>,
+                                    <span class="str">"action"</span>: <span class="str">"Please escalate to human agent"</span>
+                                })
+                            })
+                            <span class="kw">continue</span>
+
+                    <span class="cm"># Execute tool and get result</span>
+                    result = execute_tool(block.name, block.input)
+                    tool_results.append({
+                        <span class="str">"type"</span>: <span class="str">"tool_result"</span>,
+                        <span class="str">"tool_use_id"</span>: block.id,
+                        <span class="str">"content"</span>: json.dumps(result)
+                    })
+
+            messages.append({<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: tool_results})</pre></div>
+
+<div class="exercise">
+<div class="exercise-num">2</div>
+<div class="exercise-title">Configure Claude Code for Team Workflow</div>
+<div class="exercise-domains">Domains: D3 (Claude Code) + D2 (Tool Design)</div>
+<div class="step"><div class="step-num">1</div><div>Create project-level <code>.claude/CLAUDE.md</code> with universal coding standards.</div></div>
+<div class="step"><div class="step-num">2</div><div>Create <code>.claude/rules/testing.md</code> with <code>paths: ["**/*.test.*"]</code> for testing conventions.</div></div>
+<div class="step"><div class="step-num">3</div><div>Create a skill in <code>.claude/skills/</code> with <code>context: fork</code> and <code>allowed-tools</code>.</div></div>
+<div class="step"><div class="step-num">4</div><div>Configure MCP server in <code>.mcp.json</code> with env var expansion for credentials.</div></div>
+<div class="step"><div class="step-num">5</div><div>Test plan mode vs direct execution on varying complexity tasks.</div></div>
+</div>
+
+<div class="exercise">
+<div class="exercise-num">3</div>
+<div class="exercise-title">Build a Structured Data Extraction Pipeline</div>
+<div class="exercise-domains">Domains: D4 (Prompt Engineering) + D5 (Context & Reliability)</div>
+<div class="step"><div class="step-num">1</div><div>Define extraction tool with JSON schema: required + optional fields, enum + "other" + detail, nullable fields.</div></div>
+<div class="step"><div class="step-num">2</div><div>Implement validation-retry loop: doc + failed extraction + specific errors → retry. Track retryable vs non-retryable.</div></div>
+<div class="step"><div class="step-num">3</div><div>Add few-shot examples for varied document formats (inline citations vs bibliographies).</div></div>
+<div class="step"><div class="step-num">4</div><div>Design batch processing: submit 100 docs, handle failures by custom_id, resubmit with modifications.</div></div>
+<div class="step"><div class="step-num">5</div><div>Implement human review routing with field-level confidence scores.</div></div>
+</div>
+
+<div class="exercise">
+<div class="exercise-num">4</div>
+<div class="exercise-title">Design & Debug a Multi-Agent Research Pipeline</div>
+<div class="exercise-domains">Domains: D1 (Agentic Architecture) + D2 (Tool Design) + D5 (Context & Reliability)</div>
+<div class="step"><div class="step-num">1</div><div>Build coordinator + 2 subagents. Ensure <code>allowedTools</code> includes "Task". Explicit context passing.</div></div>
+<div class="step"><div class="step-num">2</div><div>Implement parallel execution: multiple Task calls in single coordinator response.</div></div>
+<div class="step"><div class="step-num">3</div><div>Design structured subagent output: claim + evidence + source URL + publication date.</div></div>
+<div class="step"><div class="step-num">4</div><div>Simulate timeout → verify structured error propagation → coordinator proceeds with partial results.</div></div>
+<div class="step"><div class="step-num">5</div><div>Test conflicting data: two credible sources with different stats → preserve both with attribution.</div></div>
+</div>
+
+<div class="info tip">
+  <div class="info-l">Build Each Exercise</div>
+  Don't just read these — <strong>actually build them</strong>. The exam tests practical judgment that comes from hands-on experience. Even a simplified implementation gives you deeper understanding than reading alone.
+</div>
+</section>
+
+<section class="section">
+<div class="stag">Project Structure</div>
+<h2>Complete Claude Code Project Setup</h2>
+<p class="sdesc">This is the file structure you should be able to create and explain for the exam.</p>
+
+<div class="code-block"><div class="code-h"><div class="code-lang">Directory Structure — Full Claude Code Project</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre>my-project/
+├── .claude/
+│   ├── CLAUDE.md                    <span class="cm"># Project-level (shared, VCS)</span>
+│   ├── commands/
+│   │   ├── review.md                <span class="cm"># Team slash command /review</span>
+│   │   └── deploy-check.md          <span class="cm"># Team slash command /deploy-check</span>
+│   ├── rules/
+│   │   ├── testing.md               <span class="cm"># paths: ["**/*.test.*"]</span>
+│   │   ├── api-conventions.md       <span class="cm"># paths: ["src/api/**/*"]</span>
+│   │   └── terraform.md             <span class="cm"># paths: ["terraform/**/*"]</span>
+│   └── skills/
+│       └── analyze-codebase/
+│           └── SKILL.md             <span class="cm"># context: fork, allowed-tools: [Read,Grep,Glob]</span>
+├── .mcp.json                        <span class="cm"># Project MCP servers (shared, VCS)</span>
+├── src/
+│   ├── api/
+│   │   ├── CLAUDE.md                <span class="cm"># Directory-level API conventions</span>
+│   │   └── routes.ts
+│   └── components/
+│       ├── Button.tsx
+│       └── Button.test.tsx          <span class="cm"># testing.md rules auto-load here</span>
+└── terraform/
+    └── main.tf                      <span class="cm"># terraform.md rules auto-load here</span>
+
+~/.claude/                           <span class="cm"># User-level (personal, NOT shared)</span>
+├── CLAUDE.md                        <span class="cm"># Personal preferences</span>
+├── commands/
+│   └── my-shortcut.md               <span class="cm"># Personal commands</span>
+└── skills/
+    └── my-variant/
+        └── SKILL.md
+
+~/.claude.json                       <span class="cm"># Personal MCP servers</span></pre></div>
+</section>
+
+</main>
+<footer class="footer"><p>CCA Foundations — Hands-On Exercises & Code Patterns · Prep Guide</p></footer>
+</body></html>

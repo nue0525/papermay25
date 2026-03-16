@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCA Domain 2 — Tool Design & MCP Integration (18%)</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--bg-card:#FFF;--text:#1A1A1A;--text2:#555;--text3:#888;--border:#E8E4DE;--border-lt:#F0ECE6;--accent:#2B6CB0;--accent-lt:#63B3ED;--green:#276749;--red:#C53030;--purple:#6B46C1;--orange:#D4622B;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Source Serif 4',Georgia,serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px;-webkit-font-smoothing:antialiased}
+.hero{background:linear-gradient(135deg,#1A365D 0%,#2B6CB0 50%,#63B3ED 100%);color:#fff;padding:60px 40px 48px}.hero-inner{max-width:1000px;margin:0 auto}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#2B6CB0,#63B3ED,#2B6CB0)}
+.hero-badge{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);padding:5px 14px;border-radius:20px;font-family:Roboto;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:44px;font-weight:400;line-height:1.2;margin-bottom:12px}.hero-sub{font-size:18px;opacity:0.85;max-width:700px;font-weight:300}
+.hero-stats{display:flex;gap:24px;margin-top:24px;flex-wrap:wrap}.hero-stat{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:12px 20px;font-family:Roboto}.hero-stat strong{font-size:22px;display:block}.hero-stat span{font-size:12px;opacity:0.8}
+.container{max-width:1000px;margin:0 auto;padding:0 40px}.section{padding:48px 0;border-bottom:1px solid var(--border-lt)}.section:last-child{border:none}
+.stag{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+h2{font-family:Roboto;font-size:28px;font-weight:700;margin-bottom:6px}h3{font-family:Roboto;font-size:20px;font-weight:600;margin:28px 0 14px}h4{font-family:Roboto;font-size:16px;font-weight:600;margin:20px 0 10px}
+.sdesc{font-size:17px;color:var(--text2);margin-bottom:32px;max-width:750px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.card-t{font-family:Roboto;font-size:18px;font-weight:700;margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.concept{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.kp{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-lt)}.kp:last-child{border:none}
+.kp-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:Roboto;font-size:12px;font-weight:700;color:#fff}
+.kp-text{font-size:14px;color:var(--text2);line-height:1.65}.kp-text strong{color:var(--text)}
+.info{padding:18px 22px;border-radius:10px;margin:18px 0;border-left:4px solid;font-size:14px;color:var(--text2)}
+.info.tip{background:#ECFDF5;border-color:var(--green)}.info.warn{background:#FFFBEB;border-color:#D97706}.info.note{background:#EBF4FF;border-color:var(--accent)}.info.err{background:#FFF5F5;border-color:var(--red)}
+.info-l{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.info.tip .info-l{color:var(--green)}.info.warn .info-l{color:#D97706}.info.note .info-l{color:var(--accent)}.info.err .info-l{color:var(--red)}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:#F0ECE6;padding:2px 6px;border-radius:4px}
+.code-block{background:#1E1E2E;border-radius:10px;margin:18px 0;overflow:hidden}
+.code-h{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#181825;border-bottom:1px solid #313244}
+.code-lang{font-family:Roboto;font-size:11px;font-weight:600;color:#CDD6F4;letter-spacing:.5px}
+.code-dots{display:flex;gap:5px}.code-dots span{width:9px;height:9px;border-radius:50%}.code-dots span:nth-child(1){background:#F38BA8}.code-dots span:nth-child(2){background:#F9E2AF}.code-dots span:nth-child(3){background:#A6E3A1}
+pre{padding:18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:#CDD6F4;margin:0}
+.kw{color:#CBA6F7}.str{color:#A6E3A1}.fn{color:#89B4FA}.cm{color:#6C7086;font-style:italic}.num{color:#FAB387}.var{color:#F5C2E7}
+.diagram{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin:24px 0;text-align:center;overflow-x:auto}
+.diagram-t{font-family:Roboto;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:16px}
+.qcard{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:24px;overflow:hidden}
+.qhead{display:flex;align-items:center;gap:14px;padding:16px 24px;background:linear-gradient(135deg,#F8F6F3,#F0EDE8);border-bottom:1px solid var(--border-lt)}
+.qnum{font-family:Roboto;font-size:12px;font-weight:700;color:#fff;background:var(--accent);width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qmeta{font-family:Roboto}.qmeta-t{font-size:14px;font-weight:600}.qmeta-s{font-size:11px;color:var(--text3)}
+.qbody{padding:20px 24px}.qtxt{font-size:15px;line-height:1.7;margin-bottom:16px}
+.opt{display:flex;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:6px;border:1px solid transparent}
+.opt.correct{background:#ECFDF5;border-color:#6EE7B7}
+.opt-l{font-family:Roboto;font-size:13px;font-weight:700;color:var(--text3);width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.opt.correct .opt-l{border-color:var(--green);color:var(--green);background:#D1FAE5}
+.opt-t{font-size:14px;color:var(--text2);line-height:1.6}
+.expl{margin-top:16px;padding:16px 18px;background:#EBF4FF;border-radius:8px;border-left:4px solid var(--accent)}
+.expl-l{font-family:Roboto;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.expl p{font-size:13px;color:var(--text2);line-height:1.7}
+details{background:var(--bg);border:1px solid var(--border-lt);border-radius:8px;margin:10px 0}
+details summary{padding:12px 18px;font-family:Roboto;font-size:14px;font-weight:600;cursor:pointer;list-style:none}
+details summary::before{content:'▸ ';color:var(--accent)}details[open] summary::before{content:'▾ '}
+details .dc{padding:0 18px 18px;font-size:14px;color:var(--text2);line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+th{font-family:Roboto;font-weight:600;text-align:left;padding:10px 14px;background:var(--bg);border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)}
+td{padding:10px 14px;border-bottom:1px solid var(--border-lt);color:var(--text2);line-height:1.5}
+.footer{background:#1A1A2E;color:rgba(255,255,255,.5);padding:32px;text-align:center;font-family:Roboto;font-size:12px}
+@media(max-width:768px){.hero{padding:40px 20px}.hero h1{font-size:30px}.container{padding:0 20px}.grid-2{grid-template-columns:1fr}.hero-stats{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+<div class="hero-inner">
+  <div class="hero-badge">CCA Foundations · Domain 2 of 5</div>
+  <h1>Tool Design &<br>MCP Integration</h1>
+  <p class="hero-sub">Design effective tool interfaces, implement structured errors, distribute tools across agents, configure MCP servers, and master built-in tools (Read, Write, Grep, Glob, Bash).</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><strong>18%</strong><span>of exam weight</span></div>
+    <div class="hero-stat"><strong>~11</strong><span>questions</span></div>
+    <div class="hero-stat"><strong>5</strong><span>task statements</span></div>
+  </div>
+</div>
+</header>
+
+<main class="container">
+
+<section class="section">
+<div class="stag">Core Concepts</div>
+<h2>The Five Pillars of Domain 2</h2>
+<p class="sdesc">This domain tests whether you can design tools that LLMs can reliably select, implement proper error handling for MCP tools, and configure MCP servers for team workflows.</p>
+
+<div class="grid-2">
+  <div class="concept" style="border-left:3px solid var(--accent)">
+    <h4 style="margin:0 0 8px 0;font-size:15px">Tool Descriptions = Tool Selection</h4>
+    <p style="font-size:14px;color:var(--text2)">Tool descriptions are the <strong>primary mechanism</strong> LLMs use to decide which tool to call. Minimal descriptions → unreliable selection → wrong tool calls. Descriptions must include: purpose, input formats, example queries, edge cases, boundaries vs similar tools.</p>
+  </div>
+  <div class="concept" style="border-left:3px solid var(--green)">
+    <h4 style="margin:0 0 8px 0;font-size:15px">Structured Error Responses</h4>
+    <p style="font-size:14px;color:var(--text2)">MCP tools must return structured errors with <code>errorCategory</code> (transient/validation/permission/business), <code>isRetryable</code> boolean, and human-readable descriptions. Generic "Operation failed" prevents intelligent recovery.</p>
+  </div>
+  <div class="concept" style="border-left:3px solid var(--orange)">
+    <h4 style="margin:0 0 8px 0;font-size:15px">Tool Distribution & Scoping</h4>
+    <p style="font-size:14px;color:var(--text2)">Giving an agent 18+ tools degrades selection reliability. Each subagent should get only tools for its role. Use <code>tool_choice</code> config: "auto" (may return text), "any" (must call a tool), forced (must call specific tool).</p>
+  </div>
+  <div class="concept" style="border-left:3px solid var(--purple)">
+    <h4 style="margin:0 0 8px 0;font-size:15px">Built-in Tool Selection</h4>
+    <p style="font-size:14px;color:var(--text2)"><strong>Grep</strong> = search file contents (patterns, functions, errors). <strong>Glob</strong> = find files by path/name pattern. <strong>Read</strong> = full file content. <strong>Edit</strong> = targeted modification (unique text match). Use Read+Write when Edit fails on non-unique text.</p>
+  </div>
+</div>
+
+<!-- Tool Description Quality Comparison -->
+<h3>Good vs Bad Tool Descriptions</h3>
+<div class="grid-2">
+<div class="code-block"><div class="code-h"><div class="code-lang">❌ BAD — Minimal Description</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre>{
+  <span class="str">"name"</span>: <span class="str">"get_customer"</span>,
+  <span class="str">"description"</span>: <span class="str">"Retrieves customer information"</span>
+  <span class="cm">// ❌ What information? What input?</span>
+  <span class="cm">// ❌ When to use vs lookup_order?</span>
+  <span class="cm">// ❌ Model can't differentiate</span>
+}
+
+{
+  <span class="str">"name"</span>: <span class="str">"lookup_order"</span>,
+  <span class="str">"description"</span>: <span class="str">"Retrieves order details"</span>
+  <span class="cm">// ❌ Nearly identical to above</span>
+  <span class="cm">// ❌ Both accept similar identifiers</span>
+}</pre></div>
+<div class="code-block"><div class="code-h"><div class="code-lang">✅ GOOD — Differentiated Description</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre>{
+  <span class="str">"name"</span>: <span class="str">"get_customer"</span>,
+  <span class="str">"description"</span>: <span class="str">"""Retrieves verified
+customer profile by ID or email.
+Returns: name, email, account_status,
+verification_level, address.
+Use BEFORE any order or refund ops.
+Do NOT use for order lookups."""</span>
+}
+{
+  <span class="str">"name"</span>: <span class="str">"lookup_order"</span>,
+  <span class="str">"description"</span>: <span class="str">"""Retrieves order details
+by order ID (format: ORD-XXXXX).
+Returns: items, total, status, shipping.
+For order-specific queries only.
+Requires verified customer_id first."""</span>
+}</pre></div>
+</div>
+
+<!-- MCP Server Config -->
+<h3>MCP Server Configuration Patterns</h3>
+<div class="grid-2">
+<div class="card">
+  <div class="card-t" style="font-size:15px;color:var(--green)">Project Scope: .mcp.json</div>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Shared via version control. All team members get these tools.</p>
+  <div class="code-block"><div class="code-h"><div class="code-lang">.mcp.json</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre>{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"jira"</span>: {
+      <span class="str">"command"</span>: <span class="str">"npx"</span>,
+      <span class="str">"args"</span>: [<span class="str">"@atlassian/mcp-jira"</span>],
+      <span class="str">"env"</span>: {
+        <span class="str">"JIRA_TOKEN"</span>: <span class="str">"${JIRA_TOKEN}"</span>
+      }
+    }
+  }
+}
+<span class="cm">// ✅ env var expansion</span>
+<span class="cm">// ✅ No secrets in code</span></pre></div>
+</div>
+<div class="card">
+  <div class="card-t" style="font-size:15px;color:var(--purple)">User Scope: ~/.claude.json</div>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Personal/experimental. NOT shared with team.</p>
+  <div class="code-block"><div class="code-h"><div class="code-lang">~/.claude.json</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre>{
+  <span class="str">"mcpServers"</span>: {
+    <span class="str">"my-custom-tool"</span>: {
+      <span class="str">"command"</span>: <span class="str">"python"</span>,
+      <span class="str">"args"</span>: [<span class="str">"~/tools/my_mcp.py"</span>]
+    }
+  }
+}
+<span class="cm">// Personal experimental server</span>
+<span class="cm">// Both project + user servers</span>
+<span class="cm">//   available simultaneously</span></pre></div>
+</div>
+</div>
+
+<!-- Structured Error Response Pattern -->
+<h3>MCP Structured Error Response Pattern</h3>
+<div class="code-block"><div class="code-h"><div class="code-lang">Python — Complete Error Response Pattern</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre><span class="cm"># ✅ TRANSIENT error — retryable</span>
+{
+    <span class="str">"isError"</span>: <span class="num">True</span>,
+    <span class="str">"errorCategory"</span>: <span class="str">"transient"</span>,       <span class="cm"># timeout, service down</span>
+    <span class="str">"isRetryable"</span>: <span class="num">True</span>,
+    <span class="str">"description"</span>: <span class="str">"Database connection timed out after 5s"</span>,
+    <span class="str">"attempted"</span>: <span class="str">"SELECT * FROM orders WHERE id = 'ORD-123'"</span>
+}
+
+<span class="cm"># ✅ VALIDATION error — NOT retryable without fix</span>
+{
+    <span class="str">"isError"</span>: <span class="num">True</span>,
+    <span class="str">"errorCategory"</span>: <span class="str">"validation"</span>,     <span class="cm"># invalid input</span>
+    <span class="str">"isRetryable"</span>: <span class="num">False</span>,
+    <span class="str">"description"</span>: <span class="str">"Order ID must be format ORD-XXXXX, got: '12345'"</span>
+}
+
+<span class="cm"># ✅ BUSINESS error — customer-facing explanation needed</span>
+{
+    <span class="str">"isError"</span>: <span class="num">True</span>,
+    <span class="str">"errorCategory"</span>: <span class="str">"business"</span>,       <span class="cm"># policy violation</span>
+    <span class="str">"isRetryable"</span>: <span class="num">False</span>,
+    <span class="str">"description"</span>: <span class="str">"Refund window (30 days) has expired for this order"</span>,
+    <span class="str">"customerMessage"</span>: <span class="str">"This order is past the 30-day refund period."</span>
+}
+
+<span class="cm"># ✅ PERMISSION error — NOT retryable</span>
+{
+    <span class="str">"isError"</span>: <span class="num">True</span>,
+    <span class="str">"errorCategory"</span>: <span class="str">"permission"</span>,
+    <span class="str">"isRetryable"</span>: <span class="num">False</span>,
+    <span class="str">"description"</span>: <span class="str">"Agent lacks access to premium tier orders"</span>
+}
+
+<span class="cm"># ✅ VALID EMPTY RESULT — this is NOT an error!</span>
+{
+    <span class="str">"found"</span>: <span class="num">False</span>,
+    <span class="str">"message"</span>: <span class="str">"No orders found matching criteria"</span>
+    <span class="cm"># No isError flag — this is a successful query with no matches</span>
+}</pre></div>
+
+<div class="info err">
+  <div class="info-l">Critical Distinction</div>
+  <strong>Access failures</strong> (timeouts, service unavailable) need retry decisions. <strong>Valid empty results</strong> (successful query, no matches) are NOT errors. Confusing these causes agents to retry queries that correctly returned zero results, or to accept failures as "no data found."
+</div>
+
+<!-- Built-in Tools Reference -->
+<h3>Built-in Tools Quick Reference</h3>
+<table>
+  <tr><th style="width:100px">Tool</th><th>Purpose</th><th>When to Use</th><th>Example</th></tr>
+  <tr><td><strong>Grep</strong></td><td>Search file <em>contents</em></td><td>Find function callers, error messages, imports</td><td><code>grep -r "processRefund" src/</code></td></tr>
+  <tr><td><strong>Glob</strong></td><td>Find files by <em>path/name</em></td><td>Find files by extension or naming pattern</td><td><code>**/*.test.tsx</code></td></tr>
+  <tr><td><strong>Read</strong></td><td>Load full file contents</td><td>Understand a specific file completely</td><td>After Grep finds entry point</td></tr>
+  <tr><td><strong>Write</strong></td><td>Full file replacement</td><td>When Edit fails (non-unique text match)</td><td>Read → modify → Write back</td></tr>
+  <tr><td><strong>Edit</strong></td><td>Targeted text modification</td><td>Small changes using unique anchor text</td><td>Replace one function body</td></tr>
+  <tr><td><strong>Bash</strong></td><td>Shell command execution</td><td>Run tests, install deps, git operations</td><td><code>npm test -- --filter=auth</code></td></tr>
+</table>
+
+<div class="info tip">
+  <div class="info-l">Codebase Exploration Pattern</div>
+  Build understanding <strong>incrementally</strong>: start with Grep to find entry points → Read to follow imports and trace flows → NOT reading all files upfront. For tracing function usage across modules: first identify all exported names, then search for each name across the codebase.
+</div>
+</section>
+
+<!-- ══════════════ PRACTICE QUESTIONS ══════════════ -->
+<section class="section">
+<div class="stag">Practice Questions</div>
+<h2>15 Questions — Domain 2</h2>
+<p class="sdesc">Cover tool descriptions, error handling, tool distribution, MCP configuration, tool_choice, and built-in tool selection.</p>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">1</div><div class="qmeta"><div class="qmeta-t">Tool Description as First Fix</div><div class="qmeta-s">Task 2.1 · Tool Interfaces</div></div></div>
+<div class="qbody">
+<div class="qtxt">Your agent calls <code>analyze_content</code> when it should call <code>analyze_document</code>. Both have near-identical descriptions. What's the most effective <strong>first step</strong>?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add few-shot examples showing correct routing in the system prompt.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Rename tools and expand descriptions to clearly differentiate each tool's purpose, inputs, outputs, and boundaries.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Implement a routing classifier to pre-select the appropriate tool.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Consolidate both into a single <code>analyze</code> tool.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Tool descriptions are the <strong>primary mechanism</strong> for tool selection. Fix the root cause first (descriptions), not symptoms. Rename <code>analyze_content</code> to <code>extract_web_results</code> with a web-specific description. A adds token overhead without fixing the underlying issue.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">2</div><div class="qmeta"><div class="qmeta-t">Error Category Selection</div><div class="qmeta-s">Task 2.2 · Error Responses</div></div></div>
+<div class="qbody">
+<div class="qtxt">Your MCP tool queries a database and gets a connection timeout. The tool returns <code>{"isError": true, "message": "Error occurred"}</code>. The agent doesn't retry and tells the user "no data was found." What's wrong?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">The tool needs to implement automatic retry logic internally.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">The error response lacks <code>errorCategory: "transient"</code> and <code>isRetryable: true</code> — the agent can't distinguish a timeout from a valid empty result.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The agent's system prompt needs instructions to retry on errors.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">The tool should throw an exception instead of returning an error object.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Without structured error metadata (<code>errorCategory</code>, <code>isRetryable</code>), the agent can't make intelligent recovery decisions. A generic "Error occurred" message is indistinguishable from "no results found" to the agent. The tool must communicate <strong>what type of error</strong> occurred and whether retry is appropriate.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">3</div><div class="qmeta"><div class="qmeta-t">Tool Count and Selection</div><div class="qmeta-s">Task 2.3 · Tool Distribution</div></div></div>
+<div class="qbody">
+<div class="qtxt">Your single agent has access to 18 tools. It frequently selects the wrong tool for similar operations — e.g., calling <code>update_billing</code> when it should call <code>update_shipping</code>. What's the primary issue?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Too many tools increases decision complexity, degrading tool selection reliability. Restrict each agent to 4-5 tools relevant to its role.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">The model needs a larger context window to process all 18 tool descriptions.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The tools need to be consolidated into fewer, more general tools.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Adding more few-shot examples for each tool will resolve the confusion.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Having 18 tools increases <strong>decision complexity</strong> — the model must differentiate between many similar options. The fix is to split into specialized agents with scoped tool access (4-5 each). C risks losing specificity. D adds more tokens without reducing complexity.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">4</div><div class="qmeta"><div class="qmeta-t">tool_choice Configuration</div><div class="qmeta-s">Task 2.3 · Tool Choice</div></div></div>
+<div class="qbody">
+<div class="qtxt">You need the model to extract metadata from a document before any enrichment tools run. The model sometimes skips the extraction step and jumps to enrichment. What's the correct <code>tool_choice</code> configuration?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t"><code>tool_choice: "auto"</code> with stronger prompt instructions.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t"><code>tool_choice: "any"</code> to guarantee a tool is called.</div></div>
+<div class="opt correct"><div class="opt-l">C</div><div class="opt-t"><code>tool_choice: {"type": "tool", "name": "extract_metadata"}</code> to force the specific extraction tool first.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Remove all enrichment tools from the first API call and add them in a subsequent call.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Forced tool selection ensures a <strong>specific tool is called first</strong>. Then in the follow-up turn (with the extraction result in context), you can switch to <code>"auto"</code> for enrichment. "any" (B) guarantees A tool but not WHICH tool. D works but is less clean than forced selection.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">5</div><div class="qmeta"><div class="qmeta-t">MCP Server Scoping</div><div class="qmeta-s">Task 2.4 · MCP Configuration</div></div></div>
+<div class="qbody">
+<div class="qtxt">A new team member clones the repo but doesn't have access to the team's Jira MCP tools. The team lead has the tools configured and working. Where is the Jira MCP server most likely configured?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">In the project's <code>.mcp.json</code> file.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">In the team lead's <code>~/.claude.json</code> file — user-scoped, not shared via version control.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">In the project's <code>CLAUDE.md</code> file.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">In a <code>.claude/mcp/</code> directory in the project.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>If a new team member doesn't have the tools, they're configured in <strong>user-scoped</strong> <code>~/.claude.json</code> (not shared). The fix is to move the config to <strong>project-scoped</strong> <code>.mcp.json</code> which is version-controlled and available to all team members after cloning.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">6</div><div class="qmeta"><div class="qmeta-t">Environment Variable Expansion</div><div class="qmeta-s">Task 2.4 · Secrets Management</div></div></div>
+<div class="qbody">
+<div class="qtxt">Your team needs to share MCP server configuration via version control, but the server requires an API token. What's the correct approach?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add the token directly in <code>.mcp.json</code> and add the file to <code>.gitignore</code>.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Use environment variable expansion in <code>.mcp.json</code>: <code>"API_TOKEN": "${MY_API_TOKEN}"</code></div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Store the token in <code>CLAUDE.md</code> which the agent can read at runtime.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Create a separate secrets.json file referenced by .mcp.json.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><code>.mcp.json</code> supports <strong>environment variable expansion</strong> using <code>${VAR_NAME}</code> syntax. This lets you commit the config structure to version control while keeping secrets in each developer's environment. A commits secrets or removes the config from version control.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">7</div><div class="qmeta"><div class="qmeta-t">Grep vs Glob Selection</div><div class="qmeta-s">Task 2.5 · Built-in Tools</div></div></div>
+<div class="qbody">
+<div class="qtxt">You need to find all files in the project that call the <code>processPayment()</code> function. Which built-in tool should you use?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t"><strong>Grep</strong> — searches file <em>contents</em> for the function name pattern.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t"><strong>Glob</strong> — finds files matching a naming pattern.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t"><strong>Read</strong> — load each file and search manually.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t"><strong>Bash</strong> — run a shell find command.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><strong>Grep</strong> searches file <em>contents</em> for patterns. <strong>Glob</strong> finds files by <em>name/path</em> pattern. You want to find <em>what's inside files</em>, not find files by their names. This is a frequently tested distinction.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">8</div><div class="qmeta"><div class="qmeta-t">Finding Test Files</div><div class="qmeta-s">Task 2.5 · Built-in Tools</div></div></div>
+<div class="qbody">
+<div class="qtxt">You need to find all test files in the project (named <code>*.test.tsx</code> or <code>*.spec.ts</code>). Which tool?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Grep — search for "test" or "spec" in file contents.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Glob — find files matching <code>**/*.test.tsx</code> and <code>**/*.spec.ts</code> patterns.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Bash — run <code>ls -R | grep test</code>.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Read — start from the root and recursively read directories.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>This is a <strong>file path pattern</strong> match — exactly what <strong>Glob</strong> is for. Grep searches file contents, which is wrong here. You want files BY NAME, not files that contain certain text.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">9</div><div class="qmeta"><div class="qmeta-t">Edit vs Read+Write Fallback</div><div class="qmeta-s">Task 2.5 · File Operations</div></div></div>
+<div class="qbody">
+<div class="qtxt">The Edit tool fails with "non-unique text match" when trying to modify a function. What's the correct fallback?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add more surrounding context to the Edit anchor text to make it unique.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Use Bash with <code>sed</code> to perform the replacement.</div></div>
+<div class="opt correct"><div class="opt-l">C</div><div class="opt-t">Use Read to load the full file, modify the content, then Write the complete file back.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Delete the file and recreate it with the modifications.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>When Edit fails due to non-unique text matches, <strong>Read + Write</strong> is the documented fallback. Read the full file, modify in memory, Write back. A might work but isn't the standard fallback pattern. B uses shell tools unnecessarily. D is destructive.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">10</div><div class="qmeta"><div class="qmeta-t">MCP Resources vs Tools</div><div class="qmeta-s">Task 2.4 · MCP Design</div></div></div>
+<div class="qbody">
+<div class="qtxt">Your agent makes many exploratory tool calls to discover what's available in a Jira project (listing all boards, then all sprints, then all issues). This consumes excessive tokens. What's the best optimization?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Cache the Jira data locally and serve it through a custom tool.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Expose a content catalog as an MCP <strong>resource</strong> (e.g., issue summaries, project hierarchy) to give the agent visibility without exploratory tool calls.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Add detailed project structure information to the system prompt.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Combine all Jira queries into a single "get_everything" tool.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>MCP <strong>resources</strong> expose content catalogs (issue summaries, documentation hierarchies, database schemas) to <strong>reduce exploratory tool calls</strong>. The agent can see what's available upfront and make targeted tool calls. C burns tokens on static info in every request. D returns too much data per call.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">11</div><div class="qmeta"><div class="qmeta-t">Community vs Custom MCP Servers</div><div class="qmeta-s">Task 2.4 · Server Selection</div></div></div>
+<div class="qbody">
+<div class="qtxt">Your team needs Jira integration for their development workflow. A developer proposes building a custom MCP server for Jira. What's the recommended approach?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Use an existing community MCP server for Jira (standard integration), reserving custom servers for team-specific workflows.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Always build custom MCP servers for full control over the integration.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Use Claude's built-in Jira integration instead of MCP.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Build a custom server and share it as a community MCP server afterward.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>The exam guide explicitly states: <strong>choose existing community MCP servers</strong> over custom implementations for standard integrations. Reserve custom servers for team-specific workflows that community servers don't cover.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">12</div><div class="qmeta"><div class="qmeta-t">Splitting Generic Tools</div><div class="qmeta-s">Task 2.1 · Tool Design</div></div></div>
+<div class="qbody">
+<div class="qtxt">Your <code>analyze_document</code> tool performs three very different operations: extracting data points, summarizing content, and verifying claims against sources. Agents frequently request the wrong operation type. What's the best fix?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add an <code>operation_type</code> enum parameter to the tool.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Split into three purpose-specific tools: <code>extract_data_points</code>, <code>summarize_content</code>, and <code>verify_claim_against_source</code>.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Add extensive documentation for each operation type in the tool description.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Let the tool auto-detect which operation to perform based on input.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Splitting generic tools into <strong>purpose-specific tools</strong> with defined input/output contracts gives the model clear signals for tool selection. Each tool name, description, and schema reinforce the correct use case. This is explicitly called out in the exam guide.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">13</div><div class="qmeta"><div class="qmeta-t">Empty Results vs Access Failures</div><div class="qmeta-s">Task 2.2 · Error Handling</div></div></div>
+<div class="qbody">
+<div class="qtxt">An agent keeps retrying a customer lookup that consistently returns empty results. The tool returns the same response for "customer not found" and "database timeout." What's the root issue?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">The agent needs a maximum retry limit in its system prompt.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">The tool doesn't distinguish between access failures (errors needing retry decisions) and valid empty results (successful queries with no matches).</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The agent should only retry if the user explicitly asks to try again.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">The database needs a health check endpoint the tool queries first.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>This is a <strong>critical distinction</strong> on the exam. Access failures (timeout, service down) may be worth retrying. Valid empty results (query worked, no matches) should NOT be retried. The tool must clearly differentiate these in its response structure.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">14</div><div class="qmeta"><div class="qmeta-t">Agent Prefers Built-in Over MCP</div><div class="qmeta-s">Task 2.4 · Tool Description Quality</div></div></div>
+<div class="qbody">
+<div class="qtxt">Your MCP server provides a powerful <code>code_search</code> tool that searches across the entire repository with semantic understanding. But the agent keeps using the built-in Grep tool instead. Why?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Built-in tools always take priority over MCP tools.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">The MCP server isn't properly connected.</div></div>
+<div class="opt correct"><div class="opt-l">C</div><div class="opt-t">The MCP tool's description doesn't adequately explain its capabilities and advantages over built-in tools.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Grep is faster and the model optimizes for latency.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>The exam guide states: <strong>enhance MCP tool descriptions</strong> to explain capabilities and outputs in detail, preventing the agent from preferring built-in tools over more capable MCP tools. The model uses descriptions to decide — if the MCP tool doesn't explain its advantages, the model defaults to familiar built-in tools.</p></div>
+</div></div>
+
+<div class="qcard">
+<div class="qhead"><div class="qnum">15</div><div class="qmeta"><div class="qmeta-t">Incremental Codebase Exploration</div><div class="qmeta-s">Task 2.5 · Exploration Pattern</div></div></div>
+<div class="qbody">
+<div class="qtxt">You need to understand how the payment processing module works in an unfamiliar codebase. What's the recommended approach?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Use Read on every file in the payments directory to understand the full module.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Start with Grep to find entry points (e.g., "processPayment"), then Read to follow imports and trace flows incrementally.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Use Glob to list all payment-related files, then Read them all at once.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Use Bash to run the test suite and infer behavior from test output.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Build understanding <strong>incrementally</strong>: Grep to find entry points → Read to follow imports → trace flows. This is much more token-efficient than reading all files upfront (A, C) which fills the context window with potentially irrelevant code.</p></div>
+</div></div>
+
+</section>
+
+<!-- Quick Reference -->
+<section class="section">
+<div class="stag">Quick Reference</div>
+<h2>Domain 2 Cheat Sheet</h2>
+<div class="card">
+<table>
+  <tr><th>Scenario</th><th>Correct Approach</th><th>Trap Answer</th></tr>
+  <tr><td>Agent calls wrong tool (similar tools)</td><td>Improve/differentiate tool descriptions</td><td>Few-shot examples, routing classifier</td></tr>
+  <tr><td>Agent doesn't retry after timeout</td><td>Return structured error with isRetryable: true</td><td>Auto-retry in tool, prompt instructions</td></tr>
+  <tr><td>Agent misuses tools outside its role</td><td>Scope tool access per agent (4-5 tools)</td><td>Add more training data, larger model</td></tr>
+  <tr><td>Need to force specific tool first</td><td>tool_choice: forced selection</td><td>Prompt "call X first"</td></tr>
+  <tr><td>Need any tool call (not text)</td><td>tool_choice: "any"</td><td>Check if response has tool_use</td></tr>
+  <tr><td>Team can't access MCP tools</td><td>Move config to project .mcp.json</td><td>Share ~/.claude.json</td></tr>
+  <tr><td>Secrets in MCP config</td><td>Env var expansion: ${VAR}</td><td>.gitignore, separate secrets file</td></tr>
+  <tr><td>Search file CONTENTS</td><td>Grep</td><td>Glob, Read all</td></tr>
+  <tr><td>Find files by NAME pattern</td><td>Glob</td><td>Grep, Bash find</td></tr>
+  <tr><td>Edit fails (non-unique match)</td><td>Read + Write full file</td><td>Bash sed, delete+recreate</td></tr>
+</table>
+</div>
+</section>
+
+</main>
+<footer class="footer"><p>CCA Foundations — Domain 2: Tool Design & MCP Integration · Prep Guide</p></footer>
+</body>
+</html>

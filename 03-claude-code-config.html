@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCA Domain 3 — Claude Code Configuration & Workflows (20%)</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--bg-card:#FFF;--text:#1A1A1A;--text2:#555;--text3:#888;--border:#E8E4DE;--border-lt:#F0ECE6;--accent:#276749;--accent-lt:#68D391;--blue:#2B6CB0;--red:#C53030;--purple:#6B46C1;--orange:#D4622B;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Source Serif 4',Georgia,serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.hero{background:linear-gradient(135deg,#1C4532 0%,#276749 50%,#48BB78 100%);color:#fff;padding:60px 40px 48px}.hero-inner{max-width:1000px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);padding:5px 14px;border-radius:20px;font-family:Roboto;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:44px;font-weight:400;line-height:1.2;margin-bottom:12px}.hero-sub{font-size:18px;opacity:0.85;max-width:700px;font-weight:300}
+.hero-stats{display:flex;gap:24px;margin-top:24px;flex-wrap:wrap}.hero-stat{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:12px 20px;font-family:Roboto}.hero-stat strong{font-size:22px;display:block}.hero-stat span{font-size:12px;opacity:0.8}
+.container{max-width:1000px;margin:0 auto;padding:0 40px}.section{padding:48px 0;border-bottom:1px solid var(--border-lt)}.section:last-child{border:none}
+.stag{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+h2{font-family:Roboto;font-size:28px;font-weight:700;margin-bottom:6px}h3{font-family:Roboto;font-size:20px;font-weight:600;margin:28px 0 14px}h4{font-family:Roboto;font-size:16px;font-weight:600;margin:20px 0 10px}
+.sdesc{font-size:17px;color:var(--text2);margin-bottom:32px;max-width:750px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}.card-t{font-family:Roboto;font-size:18px;font-weight:700;margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.info{padding:18px 22px;border-radius:10px;margin:18px 0;border-left:4px solid;font-size:14px;color:var(--text2)}
+.info.tip{background:#ECFDF5;border-color:var(--accent)}.info.warn{background:#FFFBEB;border-color:#D97706}.info.note{background:#EBF4FF;border-color:var(--blue)}.info.err{background:#FFF5F5;border-color:var(--red)}
+.info-l{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.info.tip .info-l{color:var(--accent)}.info.warn .info-l{color:#D97706}.info.note .info-l{color:var(--blue)}.info.err .info-l{color:var(--red)}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:#F0ECE6;padding:2px 6px;border-radius:4px}
+.code-block{background:#1E1E2E;border-radius:10px;margin:18px 0;overflow:hidden}
+.code-h{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#181825;border-bottom:1px solid #313244}
+.code-lang{font-family:Roboto;font-size:11px;font-weight:600;color:#CDD6F4}.code-dots{display:flex;gap:5px}.code-dots span{width:9px;height:9px;border-radius:50%}.code-dots span:nth-child(1){background:#F38BA8}.code-dots span:nth-child(2){background:#F9E2AF}.code-dots span:nth-child(3){background:#A6E3A1}
+pre{padding:18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:#CDD6F4;margin:0}
+.kw{color:#CBA6F7}.str{color:#A6E3A1}.fn{color:#89B4FA}.cm{color:#6C7086;font-style:italic}.num{color:#FAB387}
+.diagram{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin:24px 0;text-align:center;overflow-x:auto}
+.diagram-t{font-family:Roboto;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:16px}
+.qcard{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:24px;overflow:hidden}
+.qhead{display:flex;align-items:center;gap:14px;padding:16px 24px;background:linear-gradient(135deg,#F8F6F3,#F0EDE8);border-bottom:1px solid var(--border-lt)}
+.qnum{font-family:Roboto;font-size:12px;font-weight:700;color:#fff;background:var(--accent);width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qmeta{font-family:Roboto}.qmeta-t{font-size:14px;font-weight:600}.qmeta-s{font-size:11px;color:var(--text3)}
+.qbody{padding:20px 24px}.qtxt{font-size:15px;line-height:1.7;margin-bottom:16px}
+.opt{display:flex;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:6px;border:1px solid transparent}.opt.correct{background:#ECFDF5;border-color:#6EE7B7}
+.opt-l{font-family:Roboto;font-size:13px;font-weight:700;color:var(--text3);width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.opt.correct .opt-l{border-color:var(--accent);color:var(--accent);background:#D1FAE5}
+.opt-t{font-size:14px;color:var(--text2);line-height:1.6}
+.expl{margin-top:16px;padding:16px 18px;background:#EBF4FF;border-radius:8px;border-left:4px solid var(--blue)}
+.expl-l{font-family:Roboto;font-size:11px;font-weight:700;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.expl p{font-size:13px;color:var(--text2);line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}th{font-family:Roboto;font-weight:600;text-align:left;padding:10px 14px;background:var(--bg);border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)}td{padding:10px 14px;border-bottom:1px solid var(--border-lt);color:var(--text2);line-height:1.5}
+.footer{background:#1A1A2E;color:rgba(255,255,255,.5);padding:32px;text-align:center;font-family:Roboto;font-size:12px}
+@media(max-width:768px){.hero{padding:40px 20px}.hero h1{font-size:30px}.container{padding:0 20px}.grid-2{grid-template-columns:1fr}}
+</style></head><body>
+
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">CCA Foundations · Domain 3 of 5</div>
+  <h1>Claude Code Configuration<br>& Workflows</h1>
+  <p class="hero-sub">Master CLAUDE.md hierarchy, custom commands, skills, path-specific rules, plan mode vs direct execution, iterative refinement, and CI/CD integration.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><strong>20%</strong><span>of exam weight</span></div>
+    <div class="hero-stat"><strong>~12</strong><span>questions</span></div>
+    <div class="hero-stat"><strong>6</strong><span>task statements</span></div>
+  </div>
+</div></header>
+
+<main class="container">
+
+<section class="section">
+<div class="stag">Core Concepts</div>
+<h2>Configuration Hierarchy & File Locations</h2>
+<p class="sdesc">The most testable part of Domain 3 — knowing exactly where each configuration file goes, what it does, and who can see it.</p>
+
+<!-- CLAUDE.md Hierarchy Diagram -->
+<div class="diagram">
+  <div class="diagram-t">CLAUDE.md Configuration Hierarchy — Complete Map</div>
+  <svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
+    <!-- User Level -->
+    <rect x="260" y="15" width="280" height="70" rx="12" fill="#F8F5FF" stroke="#6B46C1" stroke-width="2"/>
+    <text x="400" y="42" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="600" fill="#6B46C1">~/.claude/CLAUDE.md</text>
+    <text x="400" y="62" text-anchor="middle" font-family="Roboto" font-size="11" fill="#888">USER LEVEL — Personal only</text>
+    <text x="400" y="76" text-anchor="middle" font-family="Roboto" font-size="10" fill="#C53030">NOT shared via version control</text>
+    
+    <line x1="400" y1="85" x2="400" y2="115" stroke="#CCC" stroke-width="1.5"/>
+    
+    <!-- Project Level -->
+    <rect x="240" y="115" width="320" height="70" rx="12" fill="#F2FFF5" stroke="#276749" stroke-width="2"/>
+    <text x="400" y="142" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="600" fill="#276749">.claude/CLAUDE.md</text>
+    <text x="400" y="162" text-anchor="middle" font-family="Roboto" font-size="11" fill="#888">PROJECT LEVEL — Shared via version control</text>
+    <text x="400" y="176" text-anchor="middle" font-family="Roboto" font-size="10" fill="#276749">✓ Available to all team members</text>
+    
+    <line x1="300" y1="185" x2="140" y2="225" stroke="#CCC" stroke-width="1.5"/>
+    <line x1="500" y1="185" x2="640" y2="225" stroke="#CCC" stroke-width="1.5"/>
+    
+    <!-- Directory Level -->
+    <rect x="40" y="230" width="200" height="55" rx="10" fill="#F0F7FF" stroke="#2B6CB0" stroke-width="1.5"/>
+    <text x="140" y="255" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#2B6CB0">src/api/CLAUDE.md</text>
+    <text x="140" y="272" text-anchor="middle" font-family="Roboto" font-size="10" fill="#888">DIRECTORY LEVEL</text>
+    
+    <!-- Path-specific rules -->
+    <rect x="540" y="230" width="220" height="55" rx="10" fill="#FFF5EB" stroke="#D4622B" stroke-width="1.5"/>
+    <text x="650" y="255" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#D4622B">.claude/rules/*.md</text>
+    <text x="650" y="272" text-anchor="middle" font-family="Roboto" font-size="10" fill="#888">GLOB PATTERN SCOPED</text>
+    
+    <!-- Additional configs -->
+    <rect x="40" y="320" width="200" height="45" rx="8" fill="#FFF5F8" stroke="#C53030" stroke-width="1"/>
+    <text x="140" y="340" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#C53030">.claude/commands/</text>
+    <text x="140" y="355" text-anchor="middle" font-family="Roboto" font-size="9" fill="#888">Team slash commands (VCS)</text>
+    
+    <rect x="280" y="320" width="200" height="45" rx="8" fill="#ECFDF5" stroke="#276749" stroke-width="1"/>
+    <text x="380" y="340" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#276749">.claude/skills/</text>
+    <text x="380" y="355" text-anchor="middle" font-family="Roboto" font-size="9" fill="#888">On-demand skills + SKILL.md</text>
+    
+    <rect x="520" y="320" width="240" height="45" rx="8" fill="#F8F5FF" stroke="#6B46C1" stroke-width="1"/>
+    <text x="640" y="340" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#6B46C1">~/.claude/commands/</text>
+    <text x="640" y="355" text-anchor="middle" font-family="Roboto" font-size="9" fill="#888">Personal commands (NOT shared)</text>
+
+    <!-- @import annotation -->
+    <rect x="40" y="390" width="720" height="25" rx="5" fill="#FFFBEB" stroke="#D97706" stroke-width="1"/>
+    <text x="400" y="407" text-anchor="middle" font-family="Roboto" font-size="11" fill="#D97706">@import syntax for modular organization · /memory to verify loaded files · /compact to reduce context</text>
+  </svg>
+</div>
+
+<h3>Master Reference Table</h3>
+<table>
+  <tr><th>File / Directory</th><th>Scope</th><th>Shared?</th><th>Purpose</th></tr>
+  <tr><td><code>~/.claude/CLAUDE.md</code></td><td>User</td><td>❌ No</td><td>Personal preferences, personal coding style</td></tr>
+  <tr><td><code>.claude/CLAUDE.md</code></td><td>Project</td><td>✅ Yes (VCS)</td><td>Universal project standards, testing conventions</td></tr>
+  <tr><td><code>src/api/CLAUDE.md</code></td><td>Directory</td><td>✅ Yes (VCS)</td><td>Directory-specific rules (limited to that dir)</td></tr>
+  <tr><td><code>.claude/rules/*.md</code></td><td>Path-pattern</td><td>✅ Yes (VCS)</td><td>Glob-pattern rules: <code>paths: ["**/*.test.tsx"]</code></td></tr>
+  <tr><td><code>.claude/commands/</code></td><td>Project</td><td>✅ Yes (VCS)</td><td>Team slash commands available to all</td></tr>
+  <tr><td><code>~/.claude/commands/</code></td><td>User</td><td>❌ No</td><td>Personal slash commands</td></tr>
+  <tr><td><code>.claude/skills/</code></td><td>Project</td><td>✅ Yes (VCS)</td><td>On-demand skills with SKILL.md config</td></tr>
+  <tr><td><code>~/.claude/skills/</code></td><td>User</td><td>❌ No</td><td>Personal skill variants</td></tr>
+  <tr><td><code>.mcp.json</code></td><td>Project</td><td>✅ Yes (VCS)</td><td>Shared MCP server configs</td></tr>
+  <tr><td><code>~/.claude.json</code></td><td>User</td><td>❌ No</td><td>Personal/experimental MCP servers</td></tr>
+</table>
+
+<h3>Skill Frontmatter Options</h3>
+<div class="code-block"><div class="code-h"><div class="code-lang">Markdown — .claude/skills/analyze-codebase/SKILL.md</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre><span class="cm">---</span>
+<span class="kw">context</span>: <span class="str">fork</span>            <span class="cm"># ✅ Run in isolated sub-agent context</span>
+                          <span class="cm">#    Prevents verbose output from polluting main session</span>
+<span class="kw">allowed-tools</span>:           <span class="cm"># ✅ Restrict tool access during skill execution</span>
+  - <span class="str">Read</span>
+  - <span class="str">Grep</span>
+  - <span class="str">Glob</span>                 <span class="cm">#    No Write/Bash = no destructive actions</span>
+<span class="kw">argument-hint</span>: <span class="str">"path to directory to analyze"</span>  <span class="cm"># ✅ Prompt for input</span>
+<span class="cm">---</span>
+
+<span class="str"># Codebase Analysis Skill</span>
+
+Analyze the provided directory structure, identify key patterns,
+dependencies, and architectural decisions. Return a structured summary.</pre></div>
+
+<div class="info warn">
+  <div class="info-l">Key Distinction: Skills vs CLAUDE.md vs Rules</div>
+  <strong>CLAUDE.md</strong> = always-loaded universal standards. <strong>Skills</strong> = on-demand invocation for specific tasks. <strong>.claude/rules/</strong> = conditionally loaded based on file glob patterns. Know when to use each!
+</div>
+
+<h3>Plan Mode vs Direct Execution — Decision Matrix</h3>
+<table>
+  <tr><th>Signal</th><th>→ Plan Mode</th><th>→ Direct Execution</th></tr>
+  <tr><td>Scope</td><td>Multi-file, cross-module changes</td><td>Single-file, localized change</td></tr>
+  <tr><td>Approaches</td><td>Multiple valid approaches to evaluate</td><td>One clear approach</td></tr>
+  <tr><td>Risk</td><td>Costly rework if wrong approach chosen</td><td>Low risk, easily reversible</td></tr>
+  <tr><td>Understanding</td><td>Need to explore before committing</td><td>Clear stack trace or known bug</td></tr>
+  <tr><td>Example</td><td>Monolith → microservices (45+ files)</td><td>Add date validation to one function</td></tr>
+  <tr><td>Example</td><td>Library migration with infra tradeoffs</td><td>Fix typo in error message</td></tr>
+</table>
+
+<h3>CI/CD Integration — Critical Flags</h3>
+<div class="code-block"><div class="code-h"><div class="code-lang">Bash — CI/CD Pipeline Commands</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre><span class="cm"># ✅ CORRECT: Non-interactive mode for CI</span>
+claude <span class="str">-p</span> <span class="str">"Review this PR for security issues"</span>
+
+<span class="cm"># ✅ Structured JSON output for automated processing</span>
+claude <span class="str">-p</span> <span class="str">"Review this code"</span> \
+  <span class="str">--output-format</span> json \
+  <span class="str">--json-schema</span> <span class="str">'{"type":"object","properties":{"findings":{...}}}'</span>
+
+<span class="cm"># ❌ DOES NOT EXIST — exam distractors:</span>
+<span class="cm"># CLAUDE_HEADLESS=true   ← NOT a real env var</span>
+<span class="cm"># claude --batch         ← NOT a real flag</span>
+<span class="cm"># claude < /dev/null     ← Unix workaround, not proper</span></pre></div>
+</section>
+
+<!-- PRACTICE QUESTIONS -->
+<section class="section">
+<div class="stag">Practice Questions</div>
+<h2>15 Questions — Domain 3</h2>
+
+<div class="qcard"><div class="qhead"><div class="qnum">1</div><div class="qmeta"><div class="qmeta-t">Slash Command Location</div><div class="qmeta-s">Task 3.2 · Commands</div></div></div>
+<div class="qbody"><div class="qtxt">You want <code>/review</code> available to every developer who clones the repo. Where do you put it?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t"><code>.claude/commands/</code> in the project repository</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t"><code>~/.claude/commands/</code></div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t"><code>CLAUDE.md</code> at project root</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t"><code>.claude/config.json</code> commands array</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Project-scoped commands in <code>.claude/commands/</code> are version-controlled → available to all after clone. B is personal only. C is for instructions, not commands. D doesn't exist.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">2</div><div class="qmeta"><div class="qmeta-t">New Team Member Missing Config</div><div class="qmeta-s">Task 3.1 · Hierarchy</div></div></div>
+<div class="qbody"><div class="qtxt">A new team member doesn't get the coding standards that the team lead has. The lead's configuration works perfectly. Where is the config most likely placed incorrectly?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">In the project's <code>.claude/CLAUDE.md</code></div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">In the team lead's <code>~/.claude/CLAUDE.md</code> (user-level, not shared)</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">In <code>.claude/rules/</code> with incorrect glob patterns</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">In a <code>CLAUDE.md</code> on a branch that hasn't been merged</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>User-level <code>~/.claude/CLAUDE.md</code> applies only to that user — NOT shared via version control. The fix: move to project-level <code>.claude/CLAUDE.md</code>.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">3</div><div class="qmeta"><div class="qmeta-t">Path-Specific Rules vs Directory CLAUDE.md</div><div class="qmeta-s">Task 3.3 · Rules</div></div></div>
+<div class="qbody"><div class="qtxt">Your testing conventions must apply to all test files (<code>*.test.tsx</code>) regardless of which directory they're in. Tests are spread throughout the codebase next to the code they test. What's the most maintainable approach?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Place a <code>CLAUDE.md</code> with testing conventions in every directory that contains test files.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Create a <code>.claude/rules/testing.md</code> with <code>paths: ["**/*.test.tsx"]</code> in the YAML frontmatter.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Put all testing conventions in the root <code>CLAUDE.md</code> and rely on Claude to infer when they apply.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Create a testing skill that developers invoke before writing tests.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Glob-pattern rules in <code>.claude/rules/</code> with YAML frontmatter <code>paths</code> load <strong>only when editing matching files</strong>, regardless of directory. A is unmaintainable with test files everywhere. C relies on inference. D requires manual invocation.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">4</div><div class="qmeta"><div class="qmeta-t">Plan Mode Selection</div><div class="qmeta-s">Task 3.4 · Execution Mode</div></div></div>
+<div class="qbody"><div class="qtxt">Your task is to restructure a monolithic application into microservices, affecting 45+ files with multiple valid approaches for service boundaries. Which mode?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Plan mode — explore codebase, understand dependencies, design approach before making changes.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Direct execution with comprehensive upfront instructions detailing every service.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Start direct, switch to plan mode only if unexpected complexity appears.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Direct execution, making changes incrementally to discover natural boundaries.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Plan mode is for complex tasks with large-scale changes, multiple valid approaches, and architectural decisions. C ignores that complexity is already stated in requirements. B assumes you already know the right structure.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">5</div><div class="qmeta"><div class="qmeta-t">CI Pipeline Hang</div><div class="qmeta-s">Task 3.6 · CI/CD</div></div></div>
+<div class="qbody"><div class="qtxt">Your CI job runs <code>claude "Analyze this PR"</code> but hangs indefinitely. Logs show Claude Code waiting for interactive input. What's the fix?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Use the <code>-p</code> flag: <code>claude -p "Analyze this PR"</code></div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Set <code>CLAUDE_HEADLESS=true</code></div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Redirect stdin: <code>claude "..." < /dev/null</code></div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Add <code>--batch</code> flag</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><code>-p</code> / <code>--print</code> is THE documented flag for non-interactive CI mode. <strong>CLAUDE_HEADLESS and --batch DO NOT EXIST</strong> — they are exam distractors. <code>< /dev/null</code> is a Unix workaround, not proper.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">6</div><div class="qmeta"><div class="qmeta-t">context: fork for Skills</div><div class="qmeta-s">Task 3.2 · Skills</div></div></div>
+<div class="qbody"><div class="qtxt">Your codebase analysis skill produces verbose output that fills the main conversation context, causing the agent to lose track of the user's original question. What's the fix?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add <code>/compact</code> after each skill invocation.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Add <code>context: fork</code> to the skill's frontmatter to run in an isolated sub-agent context.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Limit the skill output to 500 tokens in the SKILL.md instructions.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Convert the skill to a slash command instead.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><code>context: fork</code> runs skills in an <strong>isolated sub-agent context</strong>, preventing verbose skill output from polluting the main conversation. The skill returns a summary to the main session while keeping detailed output isolated.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">7</div><div class="qmeta"><div class="qmeta-t">Iterative Refinement: Examples</div><div class="qmeta-s">Task 3.5 · Refinement</div></div></div>
+<div class="qbody"><div class="qtxt">You described a data transformation in prose, but Claude produces inconsistent output format across different inputs. What's the most effective fix?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Repeat the prose description more clearly with bold emphasis on key formatting rules.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Provide 2-3 concrete input/output examples showing the exact expected transformation.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Switch to a more capable model.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Add a post-processing step to normalize the output.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Concrete input/output examples are the <strong>most effective</strong> way to communicate expected transformations when prose descriptions produce inconsistent results. The model learns the pattern from examples better than from verbal description.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">8</div><div class="qmeta"><div class="qmeta-t">Interview Pattern</div><div class="qmeta-s">Task 3.5 · Refinement</div></div></div>
+<div class="qbody"><div class="qtxt">You're implementing a caching system in an unfamiliar domain. Before implementing, you want Claude to surface design considerations you may not have anticipated. Which technique?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Ask Claude to implement the caching system and review the code for issues.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Use the interview pattern — have Claude ask questions about cache invalidation strategies, failure modes, and edge cases before implementing.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Provide a detailed spec and have Claude validate it.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Have Claude generate multiple implementations and compare them.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>The <strong>interview pattern</strong> has Claude ask questions to surface considerations the developer may not have anticipated. This is explicitly covered in Task 3.5 — useful for unfamiliar domains before committing to an implementation.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">9</div><div class="qmeta"><div class="qmeta-t">Test-Driven Iteration</div><div class="qmeta-s">Task 3.5 · Refinement</div></div></div>
+<div class="qbody"><div class="qtxt">You want Claude to build a migration script that handles edge cases correctly. What's the most reliable iterative approach?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Describe all edge cases verbally and have Claude implement them all at once.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Write a test suite with edge cases first (null values, empty strings, special characters), then have Claude iterate by sharing test failures.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Have Claude generate the script, then manually test each edge case.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Provide few-shot examples of correct edge case handling.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><strong>Test-driven iteration</strong>: write tests first covering expected behavior, edge cases, and performance requirements. Then iterate by sharing test failures to guide progressive improvement. The test failures give Claude precise, actionable feedback.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">10</div><div class="qmeta"><div class="qmeta-t">Structured CI Output</div><div class="qmeta-s">Task 3.6 · CI/CD</div></div></div>
+<div class="qbody"><div class="qtxt">Your CI system needs to post Claude's review findings as inline PR comments. The findings need to be machine-parseable with file path, line number, and severity. How do you get structured output?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Parse Claude's natural language output with regex.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Use <code>--output-format json</code> with <code>--json-schema</code> to enforce structured output.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Ask Claude to output JSON in the prompt and hope it complies.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Use a separate model to parse Claude's output into structured format.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><code>--output-format json</code> with <code>--json-schema</code> CLI flags <strong>enforce</strong> structured output in CI contexts. This is deterministic — no parsing needed. A is fragile. C is probabilistic. D is over-engineered.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">11</div><div class="qmeta"><div class="qmeta-t">Avoiding Duplicate CI Comments</div><div class="qmeta-s">Task 3.6 · CI/CD</div></div></div>
+<div class="qbody"><div class="qtxt">After a developer pushes new commits to a PR, your CI re-runs the Claude review. The result includes findings that were already addressed in the first review. How do you prevent duplicate comments?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Include prior review findings in context and instruct Claude to report only new or still-unaddressed issues.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Only review the diff between the two commits, ignoring the full codebase.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Maintain a database of all prior findings and filter duplicates post-review.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Use a separate Claude session that has no knowledge of prior reviews.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Include <strong>prior review findings in context</strong> and instruct Claude to report only new or still-unaddressed issues. This leverages Claude's reasoning rather than building external dedup infrastructure (C).</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">12</div><div class="qmeta"><div class="qmeta-t">@import for Modular Config</div><div class="qmeta-s">Task 3.1 · Organization</div></div></div>
+<div class="qbody"><div class="qtxt">Your monorepo has 5 packages, each with different maintainers and coding standards. The root CLAUDE.md is getting unwieldy at 500+ lines. How do you modularize?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Use <code>@import</code> syntax to reference external standards files, selectively including relevant standards in each package's CLAUDE.md.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Create one massive rules file in <code>.claude/rules/</code> with all standards.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Duplicate relevant sections into each package's directory-level CLAUDE.md.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Use skills to load different standards based on which package is being edited.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><code>@import</code> syntax allows modular organization — each package imports only the standards files relevant to its domain. Also consider splitting into focused files in <code>.claude/rules/</code> (testing.md, api-conventions.md, deployment.md).</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">13</div><div class="qmeta"><div class="qmeta-t">/memory Command</div><div class="qmeta-s">Task 3.1 · Debugging</div></div></div>
+<div class="qbody"><div class="qtxt">Claude is behaving inconsistently across sessions — sometimes following your API conventions, sometimes not. How do you diagnose which memory files are loaded?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Check the Claude Code logs in <code>~/.claude/logs/</code>.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Use the <code>/memory</code> command to verify which memory files are loaded.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Ask Claude "What configuration files are you using?"</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Create a test CLAUDE.md with a unique string and check if Claude mentions it.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><code>/memory</code> is the documented command to verify which memory files are loaded. Use it to diagnose inconsistent behavior across sessions — perhaps a user-level file is overriding project-level settings.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">14</div><div class="qmeta"><div class="qmeta-t">Self-Review Limitation</div><div class="qmeta-s">Task 3.6 · Review Architecture</div></div></div>
+<div class="qbody"><div class="qtxt">Your CI pipeline uses the same Claude session that generated code to also review it. The review rarely finds issues. Why?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">The model retains reasoning context from generation, making it less likely to question its own decisions. An independent review instance is more effective.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">The review prompt isn't detailed enough.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The code was generated correctly and there are genuinely no issues.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">The model needs more context window to hold both the code and review criteria.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><strong>Self-review limitation</strong>: the model retains reasoning context from generation. It's anchored to its own decisions. An <strong>independent Claude instance</strong> without the generator's reasoning context is significantly more effective at catching subtle issues.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">15</div><div class="qmeta"><div class="qmeta-t">Explore Subagent</div><div class="qmeta-s">Task 3.4 · Plan Mode</div></div></div>
+<div class="qbody"><div class="qtxt">During a multi-phase investigation, the main agent's context fills with verbose discovery output from exploring a large codebase. What's the best approach?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Run <code>/compact</code> after each exploration phase.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Use the Explore subagent for verbose discovery phases — it isolates output and returns summaries to preserve main conversation context.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Start a new session for each exploration phase.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Limit the number of files the agent can read per phase.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>The <strong>Explore subagent</strong> isolates verbose discovery output while returning summaries to the main agent. This prevents context window exhaustion during multi-phase tasks. <code>/compact</code> (A) compresses but may lose important details.</p></div></div></div>
+
+</section>
+
+<section class="section">
+<div class="stag">Quick Reference</div>
+<h2>Domain 3 Cheat Sheet</h2>
+<div class="card">
+<table>
+  <tr><th>Scenario</th><th>Correct Answer</th><th>Trap Answer</th></tr>
+  <tr><td>Team command for all devs</td><td><code>.claude/commands/</code> (project)</td><td><code>~/.claude/commands/</code> (personal)</td></tr>
+  <tr><td>New member missing config</td><td>Config is in user-level, move to project</td><td>Config has a bug</td></tr>
+  <tr><td>Test conventions across codebase</td><td><code>.claude/rules/</code> with glob patterns</td><td>Directory-level CLAUDE.md everywhere</td></tr>
+  <tr><td>Large-scale refactoring</td><td>Plan mode</td><td>Direct execution</td></tr>
+  <tr><td>Single-file bug fix</td><td>Direct execution</td><td>Plan mode</td></tr>
+  <tr><td>CI job hangs</td><td><code>-p</code> flag</td><td>CLAUDE_HEADLESS, --batch</td></tr>
+  <tr><td>Verbose skill output</td><td><code>context: fork</code></td><td>/compact after</td></tr>
+  <tr><td>Inconsistent formatting</td><td>Input/output examples (2-3)</td><td>Repeat prose instructions</td></tr>
+  <tr><td>Unfamiliar domain</td><td>Interview pattern</td><td>Jump straight to implementation</td></tr>
+  <tr><td>Same session reviews own code</td><td>Independent review instance</td><td>Better review prompt</td></tr>
+</table>
+</div>
+</section>
+
+</main>
+<footer class="footer"><p>CCA Foundations — Domain 3: Claude Code Configuration & Workflows · Prep Guide</p></footer>
+</body></html>

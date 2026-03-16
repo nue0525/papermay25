@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCA Domain 5 — Context Management & Reliability (15%)</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--bg-card:#FFF;--text:#1A1A1A;--text2:#555;--text3:#888;--border:#E8E4DE;--border-lt:#F0ECE6;--accent:#6B46C1;--accent-lt:#B794F4;--blue:#2B6CB0;--green:#276749;--red:#C53030;--orange:#D4622B;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Source Serif 4',Georgia,serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.hero{background:linear-gradient(135deg,#44337A 0%,#6B46C1 50%,#B794F4 100%);color:#fff;padding:60px 40px 48px}.hero-inner{max-width:1000px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);padding:5px 14px;border-radius:20px;font-family:Roboto;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:44px;font-weight:400;line-height:1.2;margin-bottom:12px}.hero-sub{font-size:18px;opacity:0.85;max-width:700px;font-weight:300}
+.hero-stats{display:flex;gap:24px;margin-top:24px;flex-wrap:wrap}.hero-stat{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:12px 20px;font-family:Roboto}.hero-stat strong{font-size:22px;display:block}.hero-stat span{font-size:12px;opacity:0.8}
+.container{max-width:1000px;margin:0 auto;padding:0 40px}.section{padding:48px 0;border-bottom:1px solid var(--border-lt)}.section:last-child{border:none}
+.stag{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+h2{font-family:Roboto;font-size:28px;font-weight:700;margin-bottom:6px}h3{font-family:Roboto;font-size:20px;font-weight:600;margin:28px 0 14px}
+.sdesc{font-size:17px;color:var(--text2);margin-bottom:32px;max-width:750px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}.card-t{font-family:Roboto;font-size:18px;font-weight:700;margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.info{padding:18px 22px;border-radius:10px;margin:18px 0;border-left:4px solid;font-size:14px;color:var(--text2)}
+.info.tip{background:#ECFDF5;border-color:var(--green)}.info.warn{background:#FFFBEB;border-color:#D97706}.info.note{background:#EBF4FF;border-color:var(--blue)}.info.err{background:#FFF5F5;border-color:var(--red)}
+.info-l{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.info.tip .info-l{color:var(--green)}.info.warn .info-l{color:#D97706}.info.note .info-l{color:var(--blue)}.info.err .info-l{color:var(--red)}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:#F0ECE6;padding:2px 6px;border-radius:4px}
+.code-block{background:#1E1E2E;border-radius:10px;margin:18px 0;overflow:hidden}
+.code-h{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#181825;border-bottom:1px solid #313244}
+.code-lang{font-family:Roboto;font-size:11px;font-weight:600;color:#CDD6F4}.code-dots{display:flex;gap:5px}.code-dots span{width:9px;height:9px;border-radius:50%}.code-dots span:nth-child(1){background:#F38BA8}.code-dots span:nth-child(2){background:#F9E2AF}.code-dots span:nth-child(3){background:#A6E3A1}
+pre{padding:18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:#CDD6F4;margin:0}
+.kw{color:#CBA6F7}.str{color:#A6E3A1}.fn{color:#89B4FA}.cm{color:#6C7086;font-style:italic}.num{color:#FAB387}
+.qcard{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:24px;overflow:hidden}
+.qhead{display:flex;align-items:center;gap:14px;padding:16px 24px;background:linear-gradient(135deg,#F8F6F3,#F0EDE8);border-bottom:1px solid var(--border-lt)}
+.qnum{font-family:Roboto;font-size:12px;font-weight:700;color:#fff;background:var(--accent);width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qmeta{font-family:Roboto}.qmeta-t{font-size:14px;font-weight:600}.qmeta-s{font-size:11px;color:var(--text3)}
+.qbody{padding:20px 24px}.qtxt{font-size:15px;line-height:1.7;margin-bottom:16px}
+.opt{display:flex;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:6px;border:1px solid transparent}.opt.correct{background:#ECFDF5;border-color:#6EE7B7}
+.opt-l{font-family:Roboto;font-size:13px;font-weight:700;color:var(--text3);width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.opt.correct .opt-l{border-color:var(--green);color:var(--green);background:#D1FAE5}
+.opt-t{font-size:14px;color:var(--text2);line-height:1.6}
+.expl{margin-top:16px;padding:16px 18px;background:#EBF4FF;border-radius:8px;border-left:4px solid var(--blue)}
+.expl-l{font-family:Roboto;font-size:11px;font-weight:700;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.expl p{font-size:13px;color:var(--text2);line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}th{font-family:Roboto;font-weight:600;text-align:left;padding:10px 14px;background:var(--bg);border-bottom:2px solid var(--border);font-size:12px}td{padding:10px 14px;border-bottom:1px solid var(--border-lt);color:var(--text2);line-height:1.5}
+.footer{background:#1A1A2E;color:rgba(255,255,255,.5);padding:32px;text-align:center;font-family:Roboto;font-size:12px}
+@media(max-width:768px){.hero{padding:40px 20px}.hero h1{font-size:30px}.container{padding:0 20px}.grid-2{grid-template-columns:1fr}}
+</style></head><body>
+
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">CCA Foundations · Domain 5 of 5</div>
+  <h1>Context Management<br>& Reliability</h1>
+  <p class="hero-sub">Master context preservation, "lost in the middle" effects, escalation patterns, error propagation, large codebase exploration, human review, and information provenance.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><strong>15%</strong><span>of exam weight</span></div>
+    <div class="hero-stat"><strong>~9</strong><span>questions</span></div>
+    <div class="hero-stat"><strong>6</strong><span>task statements</span></div>
+  </div>
+</div></header>
+
+<main class="container">
+
+<section class="section">
+<div class="stag">Core Concepts</div>
+<h2>Six Critical Context Patterns</h2>
+
+<div class="grid-2">
+<div class="card" style="border-left:3px solid var(--accent)">
+  <div class="card-t" style="font-size:15px;color:var(--accent)">1. Progressive Summarization Risk</div>
+  <p style="font-size:14px;color:var(--text2)">Condensing numerical values, percentages, dates, and customer-stated expectations into vague summaries <strong>loses critical data</strong>. Extract transactional facts (amounts, dates, order numbers) into a persistent "case facts" block <strong>outside summarized history</strong>.</p>
+</div>
+<div class="card" style="border-left:3px solid var(--blue)">
+  <div class="card-t" style="font-size:15px;color:var(--blue)">2. "Lost in the Middle" Effect</div>
+  <p style="font-size:14px;color:var(--text2)">Models reliably process information at the <strong>beginning and end</strong> of long inputs but may omit findings from <strong>middle sections</strong>. Fix: place key findings summaries at beginning, use explicit section headers, organize results to mitigate position effects.</p>
+</div>
+<div class="card" style="border-left:3px solid var(--green)">
+  <div class="card-t" style="font-size:15px;color:var(--green)">3. Escalation Triggers (3 Valid)</div>
+  <p style="font-size:14px;color:var(--text2)"><strong>Always escalate:</strong> (1) Customer explicitly requests human, (2) Policy is ambiguous or silent on the request, (3) Agent cannot make meaningful progress. <strong>Never use:</strong> sentiment-based escalation or self-reported confidence scores — both are unreliable proxies.</p>
+</div>
+<div class="card" style="border-left:3px solid var(--red)">
+  <div class="card-t" style="font-size:15px;color:var(--red)">4. Error Propagation (Not Suppression)</div>
+  <p style="font-size:14px;color:var(--text2)">Two anti-patterns: (1) silently suppress errors (returning empty results as success), (2) terminate entire workflow on single failure. Correct: return <strong>structured error context</strong> (failure type, attempted query, partial results, alternatives) to enable coordinator recovery.</p>
+</div>
+<div class="card" style="border-left:3px solid var(--orange)">
+  <div class="card-t" style="font-size:15px;color:var(--orange)">5. Scratchpad Files for Long Sessions</div>
+  <p style="font-size:14px;color:var(--text2)">In extended sessions, models start giving inconsistent answers referencing "typical patterns" instead of specific classes discovered earlier. Have agents <strong>maintain scratchpad files</strong> recording key findings, then reference them for subsequent questions.</p>
+</div>
+<div class="card" style="border-left:3px solid #D97706">
+  <div class="card-t" style="font-size:15px;color:#D97706">6. Information Provenance</div>
+  <p style="font-size:14px;color:var(--text2)">Source attribution is lost during summarization when findings are compressed without preserving <strong>claim-source mappings</strong>. Require subagents to output structured claim-source mappings (URLs, document names, excerpts) that downstream agents preserve through synthesis.</p>
+</div>
+</div>
+
+<div class="info err">
+  <div class="info-l">Key Anti-Patterns for Exam</div>
+  <strong>Trim verbose tool outputs</strong> BEFORE they accumulate. An order lookup returning 40+ fields when only 5 are relevant consumes tokens disproportionately. PostToolUse hooks can trim to relevant fields. Also: requiring <strong>subagents to include metadata</strong> (dates, source locations) in structured outputs supports accurate downstream synthesis.
+</div>
+
+<h3>Escalation Decision Matrix</h3>
+<table>
+  <tr><th>Situation</th><th>Correct Action</th><th>Why</th></tr>
+  <tr><td>Customer says "I want to talk to a human"</td><td>Escalate immediately</td><td>Honor explicit customer request — don't investigate first</td></tr>
+  <tr><td>Customer is frustrated but issue is straightforward</td><td>Acknowledge frustration, offer resolution</td><td>Escalate only if customer reiterates preference for human</td></tr>
+  <tr><td>Policy doesn't address the customer's specific request</td><td>Escalate</td><td>Policy gap — agent shouldn't guess at policy</td></tr>
+  <tr><td>Customer angry, simple order status query</td><td>Resolve the query</td><td>Sentiment ≠ complexity. Don't escalate based on tone alone</td></tr>
+  <tr><td>Multiple customer matches for same name</td><td>Ask for additional identifiers</td><td>Don't guess with heuristics — clarify</td></tr>
+  <tr><td>Agent made 3 attempts with no progress</td><td>Escalate</td><td>Inability to make meaningful progress = escalation trigger</td></tr>
+</table>
+
+<h3>Context Trimming Pattern</h3>
+<div class="code-block"><div class="code-h"><div class="code-lang">Python — Trim Verbose Tool Output</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre><span class="cm"># ✅ BEFORE: Order lookup returns 40+ fields</span>
+raw_order = {
+    <span class="str">"order_id"</span>: <span class="str">"ORD-123"</span>, <span class="str">"status"</span>: <span class="str">"shipped"</span>,
+    <span class="str">"items"</span>: [...], <span class="str">"total"</span>: <span class="num">150.00</span>,
+    <span class="str">"internal_tracking_id"</span>: <span class="str">"..."</span>,  <span class="cm"># irrelevant</span>
+    <span class="str">"warehouse_code"</span>: <span class="str">"..."</span>,       <span class="cm"># irrelevant</span>
+    <span class="str">"fulfillment_batch"</span>: <span class="str">"..."</span>,     <span class="cm"># irrelevant</span>
+    <span class="cm"># ... 35 more internal fields</span>
+}
+
+<span class="cm"># ✅ AFTER: PostToolUse hook trims to relevant fields</span>
+<span class="kw">class</span> <span class="fn">TrimOrderHook</span>:
+    RELEVANT = [<span class="str">"order_id"</span>,<span class="str">"status"</span>,<span class="str">"items"</span>,<span class="str">"total"</span>,<span class="str">"created_at"</span>,<span class="str">"return_eligible"</span>]
+
+    <span class="kw">def</span> <span class="fn">post_tool_use</span>(self, tool_name, tool_input, result):
+        <span class="kw">if</span> tool_name == <span class="str">"lookup_order"</span>:
+            <span class="kw">return</span> {k: v <span class="kw">for</span> k, v <span class="kw">in</span> result.items() <span class="kw">if</span> k <span class="kw">in</span> self.RELEVANT}
+        <span class="kw">return</span> result
+
+<span class="cm"># ✅ Persistent "case facts" block for multi-issue sessions</span>
+case_facts = {
+    <span class="str">"customer_id"</span>: <span class="str">"CUST-456"</span>,
+    <span class="str">"issues"</span>: [
+        {<span class="str">"order"</span>: <span class="str">"ORD-123"</span>, <span class="str">"amount"</span>: <span class="num">150.00</span>, <span class="str">"status"</span>: <span class="str">"pending_refund"</span>},
+        {<span class="str">"order"</span>: <span class="str">"ORD-456"</span>, <span class="str">"amount"</span>: <span class="num">75.00</span>, <span class="str">"status"</span>: <span class="str">"investigating"</span>}
+    ]
+}
+<span class="cm"># Include case_facts in EVERY prompt, outside summarized history</span></pre></div>
+</section>
+
+<section class="section">
+<div class="stag">Practice Questions</div>
+<h2>15 Questions — Domain 5</h2>
+
+<div class="qcard"><div class="qhead"><div class="qnum">1</div><div class="qmeta"><div class="qmeta-t">Progressive Summarization</div><div class="qmeta-s">Task 5.1 · Context Preservation</div></div></div>
+<div class="qbody"><div class="qtxt">After a long support conversation, the agent tells the customer their refund amount is "approximately $150" when the actual amount was $147.83. The agent had the correct amount earlier. What went wrong?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Progressive summarization condensed the exact amount into a vague approximation. Exact values should be extracted into a persistent "case facts" block.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">The context window overflowed and the exact amount was truncated.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The model rounded for brevity in its response to the customer.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">The tool returned an approximate value in a subsequent lookup.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Progressive summarization <strong>loses numerical precision</strong>. $147.83 becomes "approximately $150." Fix: extract transactional facts (exact amounts, dates, order numbers) into a <strong>persistent "case facts" block</strong> included in each prompt, outside the summarized conversation history.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">2</div><div class="qmeta"><div class="qmeta-t">Lost in the Middle</div><div class="qmeta-s">Task 5.1 · Position Effects</div></div></div>
+<div class="qbody"><div class="qtxt">Your research synthesis covers findings from 15 sources. The report includes strong analysis of the first 3 and last 3 sources but omits key findings from sources 7-10. What's the cause and fix?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">The middle sources were lower quality and correctly deprioritized.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">"Lost in the middle" effect — place key findings summaries at the beginning and organize with explicit section headers.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The context window couldn't hold all 15 sources.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">The synthesis agent has a bias toward primary sources listed first.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Models reliably process <strong>beginning and end</strong> of long inputs but may miss middle sections. Fix: place key findings at the beginning, use explicit section headers, and organize results to mitigate position effects.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">3</div><div class="qmeta"><div class="qmeta-t">Escalation: Customer Request</div><div class="qmeta-s">Task 5.2 · Escalation</div></div></div>
+<div class="qbody"><div class="qtxt">A customer says "I just want to talk to a real person please." The agent has a simple solution to their problem. What should the agent do?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Resolve the issue first since it's simple, then offer the human if still needed.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Escalate to a human agent immediately — honor explicit customer requests without attempting resolution first.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Acknowledge the request and offer to resolve before transferring.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Ask why they want a human to determine if escalation is truly necessary.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>When a customer <strong>explicitly requests a human</strong>, escalate immediately. Do not attempt resolution first — this frustrates the customer. This is an absolute escalation trigger.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">4</div><div class="qmeta"><div class="qmeta-t">Sentiment vs Complexity</div><div class="qmeta-s">Task 5.2 · Escalation</div></div></div>
+<div class="qbody"><div class="qtxt">A customer is angry and uses profanity but their actual request is a simple order status check. Should the agent escalate?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Yes — high negative sentiment triggers automatic escalation.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">No — acknowledge frustration while resolving the straightforward request. Escalate only if the customer explicitly asks for a human.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Yes — profanity indicates the customer needs human empathy.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">No — ignore the sentiment entirely and just provide the order status.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><strong>Sentiment does not correlate with case complexity</strong>. The issue is simple. Acknowledge frustration (don't ignore it — D is wrong) while offering resolution. Sentiment-based escalation is explicitly called out as an unreliable proxy.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">5</div><div class="qmeta"><div class="qmeta-t">Error Propagation Design</div><div class="qmeta-s">Task 5.3 · Multi-Agent</div></div></div>
+<div class="qbody"><div class="qtxt">A web search subagent times out. It returns <code>{"status": "search unavailable"}</code> to the coordinator. The coordinator can't determine whether to retry, use alternatives, or proceed with partial results. What's wrong?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">The error response hides valuable context. Return structured error with failure type, attempted query, partial results, and alternative approaches.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">The coordinator should have automatic retry logic for all failures.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The subagent should keep retrying internally until it succeeds.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">The coordinator should terminate the workflow since search is unavailable.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Generic error messages like "search unavailable" <strong>hide valuable context</strong> from the coordinator. Return structured error context so the coordinator can make informed recovery decisions. D is an anti-pattern (terminating entire workflow on single failure).</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">6</div><div class="qmeta"><div class="qmeta-t">Context Degradation in Long Sessions</div><div class="qmeta-s">Task 5.4 · Codebase Exploration</div></div></div>
+<div class="qbody"><div class="qtxt">After 2 hours of codebase exploration, your agent starts referencing "typical patterns" and giving inconsistent answers about classes it analyzed earlier. What's the recommended approach?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Use <code>/compact</code> to reduce context and continue.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Have the agent maintain scratchpad files recording key findings, referencing them for subsequent questions to counteract degradation.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Start a completely fresh session.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Increase the model's context window size.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Context degradation is a known issue in extended sessions. <strong>Scratchpad files</strong> persist key findings across context boundaries, acting as external memory the agent can reference. /compact (A) helps but may lose important details. Fresh session (C) loses all progress.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">7</div><div class="qmeta"><div class="qmeta-t">Human Review Sampling</div><div class="qmeta-s">Task 5.5 · Human Review</div></div></div>
+<div class="qbody"><div class="qtxt">Your extraction system has 97% overall accuracy. Management wants to reduce human review. What should you verify before automating?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">97% is high enough — automate all high-confidence extractions immediately.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Analyze accuracy by document type and field — aggregate 97% may mask poor performance on specific document types or fields.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Run a single validation pass on 100 random documents.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Check if the model's self-reported confidence correlates with actual accuracy.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Aggregate metrics can <strong>mask poor performance</strong> on specific segments. 97% overall might mean 99.5% on invoices but 80% on handwritten receipts. Analyze by document type AND field before reducing review.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">8</div><div class="qmeta"><div class="qmeta-t">Conflicting Sources in Synthesis</div><div class="qmeta-s">Task 5.6 · Provenance</div></div></div>
+<div class="qbody"><div class="qtxt">Two credible sources report different statistics for the same metric ("30% increase" vs "45% increase"). How should the synthesis output handle this?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Average the two values and report 37.5%.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Use the more recent source.</div></div>
+<div class="opt correct"><div class="opt-l">C</div><div class="opt-t">Include both values with source attribution, annotating the conflict rather than arbitrarily selecting one.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Exclude both since the data is unreliable.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>When credible sources conflict, <strong>preserve both with source attribution</strong>. Let the reader see the conflict. Don't average, don't arbitrarily pick one. Structure the report to distinguish well-established from contested findings.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">9</div><div class="qmeta"><div class="qmeta-t">Verbose Tool Output Accumulation</div><div class="qmeta-s">Task 5.1 · Token Management</div></div></div>
+<div class="qbody"><div class="qtxt">Your customer support agent makes 6 order lookups during a multi-issue session. Each returns 40+ fields. The context fills up rapidly. What's the best prevention?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Trim verbose tool outputs to only relevant fields before they accumulate in context (e.g., keep only 5 return-relevant fields from order lookups).</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Summarize previous tool results at each step.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Use a larger context window model.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Limit the agent to 3 tool calls per session.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Tool results consume tokens <strong>disproportionately to their relevance</strong>. Trim to relevant fields via PostToolUse hooks BEFORE they accumulate. Prevention is better than cure — don't wait until context is full.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">10</div><div class="qmeta"><div class="qmeta-t">Multiple Customer Matches</div><div class="qmeta-s">Task 5.2 · Ambiguity Resolution</div></div></div>
+<div class="qbody"><div class="qtxt">A customer says "I'm John Smith." The <code>get_customer</code> tool returns 3 matches for "John Smith." What should the agent do?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Select the most recently active account.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Select the account with the most orders.</div></div>
+<div class="opt correct"><div class="opt-l">C</div><div class="opt-t">Ask the customer for additional identifiers (email, order number, phone) to disambiguate.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Escalate to a human since the system can't determine which account.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>When multiple matches exist, <strong>ask for additional identifiers</strong> rather than selecting based on heuristics (A, B). Heuristic selection risks acting on the wrong account — with financial consequences.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">11</div><div class="qmeta"><div class="qmeta-t">Policy Gap Escalation</div><div class="qmeta-s">Task 5.2 · Escalation</div></div></div>
+<div class="qbody"><div class="qtxt">A customer asks for a price match against a competitor's offer. Your company's return policy covers own-site price adjustments but doesn't mention competitor matching. What should the agent do?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Deny the request since the policy doesn't explicitly allow competitor matching.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Escalate to a human — the policy is ambiguous/silent on this specific request, which is an escalation trigger.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Approve the price match as a goodwill gesture.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Ask the customer if they'd accept a discount code instead.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>When policy is <strong>ambiguous or silent</strong> on the customer's specific request, this is an explicit escalation trigger. The agent shouldn't guess at policy (A denies without authority, C approves without authority).</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">12</div><div class="qmeta"><div class="qmeta-t">Source Attribution in Synthesis</div><div class="qmeta-s">Task 5.6 · Provenance</div></div></div>
+<div class="qbody"><div class="qtxt">Your synthesis agent produces a report where claims can't be traced back to sources. The web search agent's findings were compressed during summarization. How do you prevent this?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Require subagents to output structured claim-source mappings (source URLs, document names, excerpts) that downstream agents preserve through synthesis.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Include all raw source material in the synthesis prompt.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Add "cite your sources" to the synthesis prompt.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Have the synthesis agent re-search for sources to verify claims.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Source attribution is lost during summarization. The fix: require subagents to output <strong>structured claim-source mappings</strong> that the synthesis agent must preserve. This is architectural, not prompt-based (C is insufficient).</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">13</div><div class="qmeta"><div class="qmeta-t">Crash Recovery</div><div class="qmeta-s">Task 5.4 · State Persistence</div></div></div>
+<div class="qbody"><div class="qtxt">Your multi-agent research pipeline crashes mid-execution. You want to resume from where it left off without re-doing completed work. What's the best architecture?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Re-run the entire pipeline with caching for completed steps.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Design structured state persistence: each agent exports state to a known location, and the coordinator loads a manifest on resume and injects into agent prompts.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Use session resumption with <code>--resume</code> to continue from the last point.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Log all API calls and replay them on restart.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Structured state persistence via <strong>agent state exports (manifests)</strong> that the coordinator loads on resume is the robust pattern. C assumes a single Claude Code session. D is brittle and may produce different results on replay.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">14</div><div class="qmeta"><div class="qmeta-t">Temporal Data in Sources</div><div class="qmeta-s">Task 5.6 · Provenance</div></div></div>
+<div class="qbody"><div class="qtxt">Two sources report different market share numbers. On investigation, one is from 2024 and the other from 2026 — they're not contradictory, just different time periods. How should you prevent this misinterpretation?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Use only the most recent source.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Require subagents to include publication or data collection dates in structured outputs to enable correct temporal interpretation.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Add "check dates before comparing" to the synthesis prompt.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Exclude sources older than 1 year.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Without dates, temporal differences are <strong>misinterpreted as contradictions</strong>. Requiring structured outputs with publication/collection dates is architectural — the data is always available for correct interpretation. C is prompt-based and less reliable.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">15</div><div class="qmeta"><div class="qmeta-t">Subagent Context Budget</div><div class="qmeta-s">Task 5.1 · Token Management</div></div></div>
+<div class="qbody"><div class="qtxt">Your analysis subagent sends verbose reasoning chains and full source text to the synthesis subagent, which has a limited context budget. The synthesis is incomplete because it can't fit all the data. What's the fix?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Increase the synthesis subagent's context window.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Modify the analysis subagent to return structured data (key facts, citations, relevance scores) instead of verbose content and reasoning chains.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Have the coordinator summarize the analysis before passing to synthesis.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Split the synthesis into multiple passes.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>When downstream agents have limited context, <strong>modify upstream agents to return structured data</strong> (key facts, citations, relevance scores) instead of verbose content and reasoning chains. This is an architectural fix, not a workaround.</p></div></div></div>
+
+</section>
+
+<section class="section">
+<div class="stag">Quick Reference</div>
+<h2>Domain 5 Cheat Sheet</h2>
+<div class="card"><table>
+  <tr><th>Scenario</th><th>Correct</th><th>Trap</th></tr>
+  <tr><td>Exact amounts become approximations</td><td>Persistent "case facts" block</td><td>Better summarization</td></tr>
+  <tr><td>Middle sources omitted in synthesis</td><td>Position-aware ordering + headers</td><td>Larger context window</td></tr>
+  <tr><td>Customer explicitly asks for human</td><td>Escalate immediately</td><td>Resolve first, then offer</td></tr>
+  <tr><td>Customer angry but simple query</td><td>Acknowledge + resolve</td><td>Sentiment-based escalation</td></tr>
+  <tr><td>Policy doesn't cover the request</td><td>Escalate (policy gap)</td><td>Deny or approve on own</td></tr>
+  <tr><td>Tool output bloats context</td><td>Trim to relevant fields</td><td>Summarize after accumulation</td></tr>
+  <tr><td>Agent forgets earlier findings</td><td>Scratchpad files</td><td>/compact</td></tr>
+  <tr><td>Sources conflict</td><td>Preserve both with attribution</td><td>Average or pick one</td></tr>
+  <tr><td>Multiple customer matches</td><td>Ask for additional identifiers</td><td>Heuristic selection</td></tr>
+  <tr><td>Claims can't be traced to sources</td><td>Structured claim-source mappings</td><td>"Cite your sources" prompt</td></tr>
+</table></div>
+</section>
+
+</main>
+<footer class="footer"><p>CCA Foundations — Domain 5: Context Management & Reliability · Prep Guide</p></footer>
+</body></html>

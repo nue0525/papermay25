@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCA Domain 4 — Prompt Engineering & Structured Output (20%)</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--bg-card:#FFF;--text:#1A1A1A;--text2:#555;--text3:#888;--border:#E8E4DE;--border-lt:#F0ECE6;--accent:#C53030;--accent-lt:#FC8181;--blue:#2B6CB0;--green:#276749;--purple:#6B46C1;--orange:#D4622B;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Source Serif 4',Georgia,serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.hero{background:linear-gradient(135deg,#742A2A 0%,#C53030 50%,#FC8181 100%);color:#fff;padding:60px 40px 48px}.hero-inner{max-width:1000px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);padding:5px 14px;border-radius:20px;font-family:Roboto;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:42px;font-weight:400;line-height:1.2;margin-bottom:12px}.hero-sub{font-size:18px;opacity:0.85;max-width:700px;font-weight:300}
+.hero-stats{display:flex;gap:24px;margin-top:24px;flex-wrap:wrap}.hero-stat{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:12px 20px;font-family:Roboto}.hero-stat strong{font-size:22px;display:block}.hero-stat span{font-size:12px;opacity:0.8}
+.container{max-width:1000px;margin:0 auto;padding:0 40px}.section{padding:48px 0;border-bottom:1px solid var(--border-lt)}.section:last-child{border:none}
+.stag{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+h2{font-family:Roboto;font-size:28px;font-weight:700;margin-bottom:6px}h3{font-family:Roboto;font-size:20px;font-weight:600;margin:28px 0 14px}h4{font-family:Roboto;font-size:16px;font-weight:600;margin:20px 0 10px}
+.sdesc{font-size:17px;color:var(--text2);margin-bottom:32px;max-width:750px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}.card-t{font-family:Roboto;font-size:18px;font-weight:700;margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.info{padding:18px 22px;border-radius:10px;margin:18px 0;border-left:4px solid;font-size:14px;color:var(--text2)}
+.info.tip{background:#ECFDF5;border-color:var(--green)}.info.warn{background:#FFFBEB;border-color:#D97706}.info.note{background:#EBF4FF;border-color:var(--blue)}.info.err{background:#FFF5F5;border-color:var(--accent)}
+.info-l{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.info.tip .info-l{color:var(--green)}.info.warn .info-l{color:#D97706}.info.note .info-l{color:var(--blue)}.info.err .info-l{color:var(--accent)}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:#F0ECE6;padding:2px 6px;border-radius:4px}
+.code-block{background:#1E1E2E;border-radius:10px;margin:18px 0;overflow:hidden}
+.code-h{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#181825;border-bottom:1px solid #313244}
+.code-lang{font-family:Roboto;font-size:11px;font-weight:600;color:#CDD6F4}.code-dots{display:flex;gap:5px}.code-dots span{width:9px;height:9px;border-radius:50%}.code-dots span:nth-child(1){background:#F38BA8}.code-dots span:nth-child(2){background:#F9E2AF}.code-dots span:nth-child(3){background:#A6E3A1}
+pre{padding:18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:#CDD6F4;margin:0}
+.kw{color:#CBA6F7}.str{color:#A6E3A1}.fn{color:#89B4FA}.cm{color:#6C7086;font-style:italic}.num{color:#FAB387}
+.qcard{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:24px;overflow:hidden}
+.qhead{display:flex;align-items:center;gap:14px;padding:16px 24px;background:linear-gradient(135deg,#F8F6F3,#F0EDE8);border-bottom:1px solid var(--border-lt)}
+.qnum{font-family:Roboto;font-size:12px;font-weight:700;color:#fff;background:var(--accent);width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qmeta{font-family:Roboto}.qmeta-t{font-size:14px;font-weight:600}.qmeta-s{font-size:11px;color:var(--text3)}
+.qbody{padding:20px 24px}.qtxt{font-size:15px;line-height:1.7;margin-bottom:16px}
+.opt{display:flex;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:6px;border:1px solid transparent}.opt.correct{background:#ECFDF5;border-color:#6EE7B7}
+.opt-l{font-family:Roboto;font-size:13px;font-weight:700;color:var(--text3);width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.opt.correct .opt-l{border-color:var(--green);color:var(--green);background:#D1FAE5}
+.opt-t{font-size:14px;color:var(--text2);line-height:1.6}
+.expl{margin-top:16px;padding:16px 18px;background:#EBF4FF;border-radius:8px;border-left:4px solid var(--blue)}
+.expl-l{font-family:Roboto;font-size:11px;font-weight:700;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.expl p{font-size:13px;color:var(--text2);line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}th{font-family:Roboto;font-weight:600;text-align:left;padding:10px 14px;background:var(--bg);border-bottom:2px solid var(--border);font-size:12px}td{padding:10px 14px;border-bottom:1px solid var(--border-lt);color:var(--text2);line-height:1.5}
+.footer{background:#1A1A2E;color:rgba(255,255,255,.5);padding:32px;text-align:center;font-family:Roboto;font-size:12px}
+@media(max-width:768px){.hero{padding:40px 20px}.hero h1{font-size:30px}.container{padding:0 20px}.grid-2{grid-template-columns:1fr}}
+</style></head><body>
+
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">CCA Foundations · Domain 4 of 5</div>
+  <h1>Prompt Engineering &<br>Structured Output</h1>
+  <p class="hero-sub">Master explicit criteria, few-shot prompting, JSON schema enforcement via tool_use, validation-retry loops, batch processing, and multi-pass review architectures.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><strong>20%</strong><span>of exam weight</span></div>
+    <div class="hero-stat"><strong>~12</strong><span>questions</span></div>
+    <div class="hero-stat"><strong>6</strong><span>task statements</span></div>
+  </div>
+</div></header>
+
+<main class="container">
+
+<section class="section">
+<div class="stag">Core Concepts</div>
+<h2>Six Critical Concepts</h2>
+
+<div class="card">
+<div class="card-t">1. tool_use + JSON Schemas = Guaranteed Structure</div>
+<p style="font-size:14px;color:var(--text2);margin-bottom:12px">Using <code>tool_use</code> with JSON schemas is the <strong>most reliable approach</strong> for guaranteed schema-compliant output. It eliminates JSON syntax errors entirely. BUT: it does NOT prevent <strong>semantic errors</strong> (line items that don't sum to total, values in wrong fields).</p>
+<div class="code-block"><div class="code-h"><div class="code-lang">Python — Schema Design Best Practices</div><div class="code-dots"><span></span><span></span><span></span></div></div>
+<pre>extract_tool = {
+    <span class="str">"name"</span>: <span class="str">"extract_invoice"</span>,
+    <span class="str">"input_schema"</span>: {
+        <span class="str">"type"</span>: <span class="str">"object"</span>,
+        <span class="str">"properties"</span>: {
+            <span class="cm">// ✅ Required fields — must exist in source</span>
+            <span class="str">"vendor_name"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>},
+            <span class="str">"total"</span>: {<span class="str">"type"</span>: <span class="str">"number"</span>},
+
+            <span class="cm">// ✅ NULLABLE fields — prevents hallucination</span>
+            <span class="cm">// If info isn't in doc, model returns null instead of fabricating</span>
+            <span class="str">"invoice_number"</span>: {<span class="str">"type"</span>: [<span class="str">"string"</span>, <span class="str">"null"</span>]},
+            <span class="str">"due_date"</span>: {<span class="str">"type"</span>: [<span class="str">"string"</span>, <span class="str">"null"</span>]},
+
+            <span class="cm">// ✅ Enum with "other" + detail pattern</span>
+            <span class="str">"category"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>,
+                <span class="str">"enum"</span>: [<span class="str">"supplies"</span>, <span class="str">"services"</span>, <span class="str">"equipment"</span>, <span class="str">"other"</span>]},
+            <span class="str">"category_detail"</span>: {<span class="str">"type"</span>: [<span class="str">"string"</span>, <span class="str">"null"</span>]},
+
+            <span class="cm">// ✅ Self-check fields for semantic validation</span>
+            <span class="str">"calculated_total"</span>: {<span class="str">"type"</span>: <span class="str">"number"</span>},
+            <span class="str">"conflict_detected"</span>: {<span class="str">"type"</span>: <span class="str">"boolean"</span>},
+
+            <span class="cm">// ✅ Confidence for human review routing</span>
+            <span class="str">"confidence"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>,
+                <span class="str">"enum"</span>: [<span class="str">"high"</span>, <span class="str">"medium"</span>, <span class="str">"low"</span>, <span class="str">"unclear"</span>]}
+        },
+        <span class="str">"required"</span>: [<span class="str">"vendor_name"</span>, <span class="str">"total"</span>, <span class="str">"confidence"</span>]
+    }
+}</pre></div>
+</div>
+
+<div class="card">
+<div class="card-t">2. Message Batches API — Key Constraints</div>
+<table>
+  <tr><th>Feature</th><th>Detail</th></tr>
+  <tr><td><strong>Cost savings</strong></td><td>50% cheaper than real-time API</td></tr>
+  <tr><td><strong>Processing time</strong></td><td>Up to 24 hours — NO guaranteed latency SLA</td></tr>
+  <tr><td><strong>Multi-turn support</strong></td><td>❌ NO multi-turn tool calling within a single batch request</td></tr>
+  <tr><td><strong>Result correlation</strong></td><td><code>custom_id</code> fields link request/response pairs</td></tr>
+  <tr><td><strong>Appropriate for</strong></td><td>Overnight reports, weekly audits, nightly test generation</td></tr>
+  <tr><td><strong>NOT appropriate for</strong></td><td>Blocking pre-merge checks, real-time user interactions</td></tr>
+  <tr><td><strong>Failure handling</strong></td><td>Resubmit only failed documents (identified by custom_id)</td></tr>
+</table>
+</div>
+
+<div class="card">
+<div class="card-t">3. Few-Shot Prompting — When & Why</div>
+<p style="font-size:14px;color:var(--text2)">Few-shot examples are the <strong>most effective technique</strong> for achieving consistently formatted, actionable output when detailed instructions alone produce inconsistent results. They enable generalization to novel patterns (not just matching pre-specified cases). Use 2-4 targeted examples for ambiguous scenarios showing reasoning for why one action was chosen over alternatives.</p>
+
+<div class="info note">
+  <div class="info-l">Few-Shot vs Explicit Criteria</div>
+  Few-shot examples show <em>how</em> to handle ambiguity. Explicit criteria define <em>what</em> to look for. Both are needed — explicit criteria for precision, few-shot for consistency. Neither alone is sufficient for complex extraction tasks.
+</div>
+</div>
+
+<div class="card">
+<div class="card-t">4. Validation-Retry Loop — When Retries Work vs Don't</div>
+<div class="grid-2">
+  <div style="background:#ECFDF5;padding:16px;border-radius:8px;border:1px solid #6EE7B7">
+    <h4 style="color:var(--green);margin:0 0 8px">✅ Retries WILL Help</h4>
+    <p style="font-size:13px;color:var(--text2)">Format mismatches (wrong date format), structural errors (missing required field), JSON parsing issues, extraction from wrong section of document</p>
+  </div>
+  <div style="background:#FFF5F5;padding:16px;border-radius:8px;border:1px solid #FC8181">
+    <h4 style="color:var(--accent);margin:0 0 8px">❌ Retries WON'T Help</h4>
+    <p style="font-size:13px;color:var(--text2)">Information simply absent from source document, data only exists in external document not provided, ambiguous source data with no clear answer</p>
+  </div>
+</div>
+</div>
+</section>
+
+<section class="section">
+<div class="stag">Practice Questions</div>
+<h2>15 Questions — Domain 4</h2>
+
+<div class="qcard"><div class="qhead"><div class="qnum">1</div><div class="qmeta"><div class="qmeta-t">Guaranteed Structured Output</div><div class="qmeta-s">Task 4.3 · tool_use</div></div></div>
+<div class="qbody"><div class="qtxt">Your extraction pipeline sometimes produces malformed JSON, causing downstream parsing failures. What's the most reliable fix?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Use <code>tool_use</code> with a JSON schema — this guarantees schema-compliant output and eliminates syntax errors.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Add "respond only in valid JSON" to the system prompt.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Add a JSON validation and repair step after generation.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Use extended thinking to help the model plan its JSON structure.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><code>tool_use</code> with JSON schemas provides <strong>guaranteed schema compliance</strong> — JSON syntax errors are eliminated at the API level. B is probabilistic. C is a workaround. D doesn't address the root cause.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">2</div><div class="qmeta"><div class="qmeta-t">Semantic vs Syntax Errors</div><div class="qmeta-s">Task 4.3 · Limitations</div></div></div>
+<div class="qbody"><div class="qtxt">Your extraction uses tool_use with JSON schemas. The output is valid JSON matching the schema, but line item amounts don't sum to the total. What type of error is this?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Schema validation error — the schema needs stricter constraints.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Semantic error — tool_use eliminates syntax errors but NOT semantic errors like incorrect calculations.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Model hallucination — the model is fabricating numbers.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Context window overflow — the model lost track of earlier line items.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Tool_use guarantees <strong>syntax compliance</strong> but NOT <strong>semantic correctness</strong>. Values in wrong fields, incorrect sums, and logical inconsistencies are semantic errors that require separate validation (e.g., comparing <code>calculated_total</code> vs <code>stated_total</code>).</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">3</div><div class="qmeta"><div class="qmeta-t">Nullable Fields to Prevent Hallucination</div><div class="qmeta-s">Task 4.3 · Schema Design</div></div></div>
+<div class="qbody"><div class="qtxt">Your extraction schema marks <code>invoice_number</code> as required, but some documents don't contain an invoice number. The model fabricates plausible-looking invoice numbers. What's the fix?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add "only extract information that actually appears in the document" to the prompt.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Make the field nullable: <code>{"type": ["string", "null"]}</code> — the model returns null when info isn't present instead of fabricating.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Remove the field entirely from the schema.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Add a confidence score and filter low-confidence values.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>When source documents may not contain certain information, make those fields <strong>optional (nullable)</strong>. Required fields force the model to fill them — even by fabricating. Nullable fields give the model permission to return null.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">4</div><div class="qmeta"><div class="qmeta-t">Batch API Appropriateness</div><div class="qmeta-s">Task 4.5 · Batch Processing</div></div></div>
+<div class="qbody"><div class="qtxt">Your team uses real-time API calls for: (1) blocking pre-merge code reviews that developers wait for, and (2) overnight technical debt reports. The manager wants both on Batch API for 50% savings. Your recommendation?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Batch only the overnight reports. Keep pre-merge checks on real-time API.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Batch both with status polling to check for completion.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Keep both on real-time to avoid ordering issues.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Batch both with timeout fallback to real-time.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Batch API has <strong>up to 24-hour processing with NO latency SLA</strong> — unsuitable for blocking workflows where developers wait. Perfect for overnight/weekly jobs. Match API to workflow latency requirements.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">5</div><div class="qmeta"><div class="qmeta-t">Validation-Retry Effectiveness</div><div class="qmeta-s">Task 4.4 · Retry Loops</div></div></div>
+<div class="qbody"><div class="qtxt">Extraction fails because the source document mentions "see appendix for pricing details" but the appendix wasn't included. Retry with error feedback continues to fail. Why?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">The retry prompt isn't specific enough about what went wrong.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">The required information exists only in an external document not provided — retries are ineffective when data is absent from the source.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The model needs more context window to process the document.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">The schema should make the pricing field optional.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Retries work for format/structural errors. They are <strong>ineffective when information is simply absent</strong> from the source. No amount of retrying will produce data that doesn't exist in the provided document. D is a valid schema improvement but doesn't address the retry question.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">6</div><div class="qmeta"><div class="qmeta-t">Few-Shot for Ambiguous Cases</div><div class="qmeta-s">Task 4.2 · Few-Shot</div></div></div>
+<div class="qbody"><div class="qtxt">Your code review tool flags informal variable names as bugs in some files but not others. The instructions say "flag naming convention violations" but the results are inconsistent. What's the best improvement?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Make the instructions more detailed about what constitutes a naming violation.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Add 2-4 few-shot examples showing acceptable patterns vs genuine naming issues, enabling generalization to novel cases.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Add a linting tool to check naming conventions programmatically.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Lower the confidence threshold for naming-related findings.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Few-shot examples are the most effective technique for ambiguous scenarios. They demonstrate the <strong>boundary between acceptable and problematic patterns</strong>, enabling generalization to novel cases that weren't explicitly listed.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">7</div><div class="qmeta"><div class="qmeta-t">False Positive Reduction</div><div class="qmeta-s">Task 4.1 · Explicit Criteria</div></div></div>
+<div class="qbody"><div class="qtxt">Your code review generates many false positives in the "comment accuracy" category, undermining developer trust even in categories where it's accurate. What's the best first step?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add "be more conservative" to the review prompt.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Temporarily disable the high-false-positive category while improving its prompts with explicit criteria.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Require human confirmation for all findings before posting.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Switch to a more capable model.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>"Be conservative" is vague and fails to improve precision. Temporarily disabling high-false-positive categories <strong>restores developer trust</strong> while you improve prompts. Trust is critical — if developers dismiss all findings, accurate categories are wasted too.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">8</div><div class="qmeta"><div class="qmeta-t">tool_choice: "any" Use Case</div><div class="qmeta-s">Task 4.3 · Configuration</div></div></div>
+<div class="qbody"><div class="qtxt">You have three extraction schemas (invoice, receipt, purchase order) but don't know the document type in advance. The model sometimes returns text instead of calling any extraction tool. What <code>tool_choice</code> setting fixes this?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t"><code>tool_choice: "auto"</code> — the model can figure out the right one.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t"><code>tool_choice: "any"</code> — guarantees the model calls a tool but lets it choose which extraction schema.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Force the invoice tool and handle mismatches in validation.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Add a classification step before extraction.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p><code>"any"</code> guarantees the model <strong>calls a tool</strong> (no text response) but lets it <strong>choose which one</strong>. Perfect when you have multiple valid tools and need structured output guaranteed. "auto" (A) allows text responses. Forced (C) assumes you know the type.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">9</div><div class="qmeta"><div class="qmeta-t">Multi-Pass Code Review</div><div class="qmeta-s">Task 4.6 · Review Architecture</div></div></div>
+<div class="qbody"><div class="qtxt">A single-pass review of 14 files produces contradictory findings — flagging code as problematic in one file while approving identical code elsewhere. Best restructuring approach?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">Per-file local analysis passes + a separate cross-file integration pass for data flow analysis.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">Three independent full-PR reviews, flagging only issues found in 2+ runs.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Require smaller PRs (3-4 files max).</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Use a larger context window model.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Split reviews into focused passes to address <strong>attention dilution</strong>. Per-file passes ensure consistent depth. Separate integration pass catches cross-file issues. B suppresses real bug detection. D doesn't fix attention quality.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">10</div><div class="qmeta"><div class="qmeta-t">Retry with Error Feedback</div><div class="qmeta-s">Task 4.4 · Validation</div></div></div>
+<div class="qbody"><div class="qtxt">Your extraction returns dates in "March 15, 2026" format but your schema requires ISO 8601 "2026-03-15". The validation fails. What's the correct retry approach?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add format normalization rules to the prompt and re-extract from scratch.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Send a follow-up request including the original document, the failed extraction, and the specific validation error ("date must be ISO 8601") for self-correction.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Parse and convert the date format in post-processing.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Make the date field accept any string format.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>The retry-with-error-feedback pattern: send original doc + failed extraction + <strong>specific validation errors</strong>. The model corrects the specific issue. This is a format error (retries help). C works but misses the exam's focus on the retry pattern.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">11</div><div class="qmeta"><div class="qmeta-t">Batch Failure Handling</div><div class="qmeta-s">Task 4.5 · Batch Processing</div></div></div>
+<div class="qbody"><div class="qtxt">You batch-process 100 documents. 8 fail because they exceeded context limits. How do you handle the failures?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Resubmit all 100 documents with a larger max_tokens setting.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Identify the 8 failed documents by <code>custom_id</code> and resubmit only those with modifications (e.g., chunking oversized documents).</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Switch to real-time API for the remaining 8 documents.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Mark them as failed and skip them.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Use <code>custom_id</code> to identify failures and resubmit <strong>only failed documents</strong> with appropriate modifications (chunking). Don't reprocess the successful 92 documents.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">12</div><div class="qmeta"><div class="qmeta-t">Explicit Criteria vs Vague Instructions</div><div class="qmeta-s">Task 4.1 · Precision</div></div></div>
+<div class="qbody"><div class="qtxt">Your review prompt says "only report high-confidence findings." The false positive rate hasn't improved. Why?</div>
+<div class="opt correct"><div class="opt-l">A</div><div class="opt-t">General instructions like "be conservative" or "high-confidence only" fail to improve precision — specific categorical criteria defining WHAT to report vs skip are needed.</div></div>
+<div class="opt"><div class="opt-l">B</div><div class="opt-t">The model's confidence calibration needs fine-tuning.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">The model is ignoring the instruction due to other conflicting prompts.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Extended thinking is needed for the model to properly assess confidence.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Vague instructions ("be conservative", "high-confidence only") don't give the model actionable criteria. Instead: <strong>specific categorical criteria</strong> — "report bugs and security issues, skip minor style and local patterns" with concrete code examples for each severity level.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">13</div><div class="qmeta"><div class="qmeta-t">Enum + Other Pattern</div><div class="qmeta-s">Task 4.3 · Schema Design</div></div></div>
+<div class="qbody"><div class="qtxt">Your category field has <code>"enum": ["hardware", "software", "networking"]</code>. Documents occasionally describe categories that don't fit any option, causing misclassification. What's the schema fix?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Remove the enum and use a free-text string field.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Add <code>"other"</code> to the enum and a companion <code>category_detail</code> nullable string field for description.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Add more enum values to cover all possible categories.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Let the model choose the closest matching enum value.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>The <strong>"other" + detail pattern</strong>: add "other" to the enum for extensible categorization, with a companion detail field for description. This gives structure while handling unexpected categories. A loses all structure. C can't anticipate everything. D forces inaccurate classification.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">14</div><div class="qmeta"><div class="qmeta-t">Prompt Refinement Before Batch</div><div class="qmeta-s">Task 4.5 · Cost Optimization</div></div></div>
+<div class="qbody"><div class="qtxt">You need to batch-process 10,000 documents. What should you do before submitting the full batch?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Submit all 10,000 immediately and fix issues in a second pass.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Run prompt refinement on a sample set (e.g., 50-100 documents) to maximize first-pass success rates before processing the full volume.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Split into batches of 1,000 and process sequentially.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Validate the JSON schema against all 10,000 documents first.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Prompt refinement on a <strong>sample set</strong> before large-volume batch processing maximizes first-pass success rates and reduces resubmission costs. Testing with 10,000 immediately wastes API credits on a potentially flawed prompt.</p></div></div></div>
+
+<div class="qcard"><div class="qhead"><div class="qnum">15</div><div class="qmeta"><div class="qmeta-t">Independent Review Instance</div><div class="qmeta-s">Task 4.6 · Multi-Instance</div></div></div>
+<div class="qbody"><div class="qtxt">Your pipeline generates code with Claude, then asks the SAME Claude session to review it. The review finds very few issues. What architectural change would catch more bugs?</div>
+<div class="opt"><div class="opt-l">A</div><div class="opt-t">Add "be extra critical" to the review prompt.</div></div>
+<div class="opt correct"><div class="opt-l">B</div><div class="opt-t">Use a second independent Claude instance (without the generator's reasoning context) for review.</div></div>
+<div class="opt"><div class="opt-l">C</div><div class="opt-t">Use extended thinking for the review pass.</div></div>
+<div class="opt"><div class="opt-l">D</div><div class="opt-t">Have the model generate 3 versions and review each against the others.</div></div>
+<div class="expl"><div class="expl-l">Explanation</div><p>Self-review is limited because the model <strong>retains reasoning context from generation</strong>. An independent review instance without that context is more effective at questioning assumptions and catching subtle issues.</p></div></div></div>
+
+</section>
+
+<section class="section">
+<div class="stag">Quick Reference</div>
+<h2>Domain 4 Cheat Sheet</h2>
+<div class="card"><table>
+  <tr><th>Scenario</th><th>Correct</th><th>Trap</th></tr>
+  <tr><td>Need guaranteed JSON structure</td><td>tool_use + JSON schema</td><td>Prompt "respond in JSON"</td></tr>
+  <tr><td>Correct JSON but wrong values</td><td>Semantic error — needs validation</td><td>Schema error — needs stricter schema</td></tr>
+  <tr><td>Model fabricates missing data</td><td>Make field nullable</td><td>Better prompt instructions</td></tr>
+  <tr><td>Inconsistent output format</td><td>Few-shot examples (2-4)</td><td>More detailed instructions</td></tr>
+  <tr><td>High false positive rate</td><td>Explicit categorical criteria</td><td>"Be more conservative"</td></tr>
+  <tr><td>Blocking workflow cost savings</td><td>Keep real-time, batch only non-blocking</td><td>Batch everything</td></tr>
+  <tr><td>Retry keeps failing</td><td>Data absent — retries won't help</td><td>Better retry prompt</td></tr>
+  <tr><td>Multiple valid schemas, unknown type</td><td>tool_choice: "any"</td><td>tool_choice: "auto"</td></tr>
+  <tr><td>Force specific tool first</td><td>Forced tool selection</td><td>Prompt "call X first"</td></tr>
+  <tr><td>Same session reviews own code</td><td>Independent review instance</td><td>"Be extra critical"</td></tr>
+</table></div>
+</section>
+
+</main>
+<footer class="footer"><p>CCA Foundations — Domain 4: Prompt Engineering & Structured Output · Prep Guide</p></footer>
+</body></html>

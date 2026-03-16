@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCA Exam Scenarios — All 6 Scenarios Deep Dive</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--bg-card:#FFF;--text:#1A1A1A;--text2:#555;--text3:#888;--border:#E8E4DE;--border-lt:#F0ECE6;--d1:#D4622B;--d2:#2B6CB0;--d3:#276749;--d4:#C53030;--d5:#6B46C1;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Source Serif 4',Georgia,serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
+.hero{background:linear-gradient(135deg,#1A1A2E 0%,#16213E 50%,#0F3460 100%);color:#fff;padding:60px 40px 48px}.hero-inner{max-width:1000px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(212,98,43,0.2);border:1px solid rgba(212,98,43,0.4);color:#F2A365;padding:5px 14px;border-radius:20px;font-family:Roboto;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:44px;font-weight:400;line-height:1.2;margin-bottom:12px}.hero-sub{font-size:18px;opacity:0.85;max-width:700px;font-weight:300}
+.container{max-width:1000px;margin:0 auto;padding:0 40px}.section{padding:48px 0;border-bottom:1px solid var(--border-lt)}.section:last-child{border:none}
+.stag{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--d1);margin-bottom:10px}
+h2{font-family:Roboto;font-size:28px;font-weight:700;margin-bottom:6px}h3{font-family:Roboto;font-size:20px;font-weight:600;margin:28px 0 14px}
+.sdesc{font-size:17px;color:var(--text2);margin-bottom:32px;max-width:750px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}.card-t{font-family:Roboto;font-size:18px;font-weight:700;margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:#F0ECE6;padding:2px 6px;border-radius:4px}
+.info{padding:18px 22px;border-radius:10px;margin:18px 0;border-left:4px solid;font-size:14px;color:var(--text2)}
+.info.warn{background:#FFFBEB;border-color:#D97706}.info.note{background:#EBF4FF;border-color:var(--d2)}
+.info-l{font-family:Roboto;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.info.warn .info-l{color:#D97706}.info.note .info-l{color:var(--d2)}
+.scenario{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px 32px;margin-bottom:24px;border-left:5px solid}
+.s1{border-left-color:var(--d1)}.s2{border-left-color:var(--d3)}.s3{border-left-color:var(--d2)}.s4{border-left-color:var(--d5)}.s5{border-left-color:var(--d4)}.s6{border-left-color:#D97706}
+.scenario-num{font-family:'DM Serif Display',serif;font-size:42px;line-height:1;margin-bottom:8px}
+.s1 .scenario-num{color:var(--d1)}.s2 .scenario-num{color:var(--d3)}.s3 .scenario-num{color:var(--d2)}.s4 .scenario-num{color:var(--d5)}.s5 .scenario-num{color:var(--d4)}.s6 .scenario-num{color:#D97706}
+.scenario-title{font-family:Roboto;font-size:22px;font-weight:700;margin-bottom:8px}
+.scenario-desc{font-size:15px;color:var(--text2);margin-bottom:14px;line-height:1.7}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tag{font-family:Roboto;font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px}
+.tag-d1{background:#FFF5EB;color:var(--d1)}.tag-d2{background:#F0F7FF;color:var(--d2)}.tag-d3{background:#F2FFF5;color:var(--d3)}.tag-d4{background:#FFF5F8;color:var(--d4)}.tag-d5{background:#F8F5FF;color:var(--d5)}
+.topic{background:var(--bg);border:1px solid var(--border-lt);border-radius:8px;padding:14px 18px;margin:8px 0;font-size:14px;color:var(--text2)}
+.topic strong{color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}th{font-family:Roboto;font-weight:600;text-align:left;padding:10px 14px;background:var(--bg);border-bottom:2px solid var(--border);font-size:12px}td{padding:10px 14px;border-bottom:1px solid var(--border-lt);color:var(--text2);line-height:1.5}
+.footer{background:#1A1A2E;color:rgba(255,255,255,.5);padding:32px;text-align:center;font-family:Roboto;font-size:12px}
+@media(max-width:768px){.hero{padding:40px 20px}.hero h1{font-size:30px}.container{padding:0 20px}.grid-2{grid-template-columns:1fr}}
+</style></head><body>
+
+<header class="hero"><div class="hero-inner">
+  <div class="hero-badge">CCA Foundations · Exam Scenarios</div>
+  <h1>All 6 Exam Scenarios<br>Deep Dive</h1>
+  <p class="hero-sub">The exam randomly selects 4 of these 6 scenarios. Each scenario frames multiple questions. Study all 6 — you can't predict which 4 you'll get.</p>
+</div></header>
+
+<main class="container">
+
+<section class="section">
+<div class="stag">How Scenarios Work</div>
+<h2>Exam Format</h2>
+<div class="info warn">
+  <div class="info-l">Important</div>
+  The exam presents 4 scenarios (randomly selected from 6). Each scenario provides a realistic production context, then asks multiple questions. Questions test concepts from the scenario's primary domains, but may also touch related domains. You must understand ALL 6 scenarios and ALL 5 domains.
+</div>
+
+<table>
+  <tr><th>Scenario</th><th>Primary Domains</th><th>MCP Tools Referenced</th></tr>
+  <tr><td><strong>1.</strong> Customer Support Resolution Agent</td><td>D1 + D2 + D5</td><td>get_customer, lookup_order, process_refund, escalate_to_human</td></tr>
+  <tr><td><strong>2.</strong> Code Generation with Claude Code</td><td>D3 + D5</td><td>Built-in: Read, Write, Edit, Bash, Grep, Glob</td></tr>
+  <tr><td><strong>3.</strong> Multi-Agent Research System</td><td>D1 + D2 + D5</td><td>web_search, fetch_url, read_doc, verify_fact</td></tr>
+  <tr><td><strong>4.</strong> Developer Productivity with Claude</td><td>D2 + D3 + D1</td><td>Built-in tools + custom MCP servers</td></tr>
+  <tr><td><strong>5.</strong> Claude Code for CI/CD</td><td>D3 + D4</td><td>-p flag, --output-format json, --json-schema</td></tr>
+  <tr><td><strong>6.</strong> Structured Data Extraction</td><td>D4 + D5</td><td>tool_use extraction tools with JSON schemas</td></tr>
+</table>
+</section>
+
+<!-- SCENARIO 1 -->
+<section class="section">
+<div class="scenario s1">
+  <div class="scenario-num">1</div>
+  <div class="scenario-title">Customer Support Resolution Agent</div>
+  <div class="scenario-desc">Build a customer support agent using Claude Agent SDK. Handles returns, billing disputes, account issues. Access backend via MCP tools: <code>get_customer</code>, <code>lookup_order</code>, <code>process_refund</code>, <code>escalate_to_human</code>. Target: 80%+ first-contact resolution while knowing when to escalate.</div>
+  <div class="tags"><span class="tag tag-d1">D1: Agentic Architecture 27%</span><span class="tag tag-d2">D2: Tool Design 18%</span><span class="tag tag-d5">D5: Context & Reliability 15%</span></div>
+</div>
+
+<h3>Topics You'll Be Tested On:</h3>
+<div class="topic"><strong>Prerequisite enforcement:</strong> Block process_refund until get_customer returns verified ID. Programmatic hooks, not prompt instructions.</div>
+<div class="topic"><strong>Tool description quality:</strong> Why get_customer and lookup_order get confused when descriptions are minimal. Fix: expand descriptions with boundaries.</div>
+<div class="topic"><strong>Escalation calibration:</strong> Agent escalates easy cases but handles complex ones. Fix: explicit criteria with few-shot examples.</div>
+<div class="topic"><strong>Context preservation:</strong> Exact refund amounts lost to summarization. Fix: persistent "case facts" block.</div>
+<div class="topic"><strong>Multi-concern decomposition:</strong> Customer has 3 issues in one message. Decompose, investigate each, synthesize unified response.</div>
+<div class="topic"><strong>Structured handoffs:</strong> When escalating, compile: customer ID, root cause, amount, steps taken, recommended action.</div>
+<div class="topic"><strong>Hook patterns:</strong> PostToolUse for date normalization. Tool interception for blocking refunds > $500.</div>
+</section>
+
+<!-- SCENARIO 2 -->
+<section class="section">
+<div class="scenario s2">
+  <div class="scenario-num">2</div>
+  <div class="scenario-title">Code Generation with Claude Code</div>
+  <div class="scenario-desc">Use Claude Code for code generation, refactoring, debugging, and documentation. Configure custom slash commands, CLAUDE.md, plan mode vs direct execution.</div>
+  <div class="tags"><span class="tag tag-d3">D3: Claude Code Config 20%</span><span class="tag tag-d5">D5: Context & Reliability 15%</span></div>
+</div>
+
+<h3>Topics You'll Be Tested On:</h3>
+<div class="topic"><strong>CLAUDE.md hierarchy:</strong> User (~/.claude/CLAUDE.md) vs project (.claude/CLAUDE.md) vs directory. New team member missing config = user-level config not shared.</div>
+<div class="topic"><strong>Slash command locations:</strong> .claude/commands/ (team) vs ~/.claude/commands/ (personal). .claude/config.json commands array DOES NOT EXIST.</div>
+<div class="topic"><strong>Plan mode vs direct execution:</strong> 45-file monolith refactoring = plan mode. Single-file bug fix = direct execution.</div>
+<div class="topic"><strong>Path-specific rules:</strong> .claude/rules/ with YAML frontmatter paths: ["**/*.test.tsx"] for cross-directory test conventions.</div>
+<div class="topic"><strong>Skills with frontmatter:</strong> context: fork isolates verbose output. allowed-tools restricts destructive actions. argument-hint prompts for input.</div>
+<div class="topic"><strong>Iterative refinement:</strong> Input/output examples > prose descriptions. Test-driven iteration. Interview pattern for unfamiliar domains.</div>
+</section>
+
+<!-- SCENARIO 3 -->
+<section class="section">
+<div class="scenario s3">
+  <div class="scenario-num">3</div>
+  <div class="scenario-title">Multi-Agent Research System</div>
+  <div class="scenario-desc">Coordinator delegates to search, analysis, synthesis, and report subagents. System researches topics, produces comprehensive cited reports.</div>
+  <div class="tags"><span class="tag tag-d1">D1: Agentic Architecture 27%</span><span class="tag tag-d2">D2: Tool Design 18%</span><span class="tag tag-d5">D5: Context & Reliability 15%</span></div>
+</div>
+
+<h3>Topics You'll Be Tested On:</h3>
+<div class="topic"><strong>Narrow decomposition:</strong> "AI in creative industries" → coordinator only decomposes into visual arts. Root cause: coordinator, not downstream agents.</div>
+<div class="topic"><strong>Context isolation:</strong> Subagents don't auto-inherit coordinator context. Must explicitly pass prior findings in prompt.</div>
+<div class="topic"><strong>Parallel execution:</strong> Multiple Task calls in single coordinator response for parallel subagent spawning.</div>
+<div class="topic"><strong>Scoped verify_fact:</strong> Give synthesis agent limited verification tool for 85% common case; complex verifications through coordinator.</div>
+<div class="topic"><strong>Error propagation:</strong> Timeout returns structured context (failure type, partial results, alternatives), not generic "unavailable."</div>
+<div class="topic"><strong>Information provenance:</strong> Claim-source mappings preserved through synthesis. Conflicting stats annotated, not arbitrarily selected.</div>
+<div class="topic"><strong>Iterative refinement:</strong> Coordinator identifies coverage gaps → re-delegates with targeted queries → re-invokes synthesis.</div>
+</section>
+
+<!-- SCENARIO 4 -->
+<section class="section">
+<div class="scenario s4">
+  <div class="scenario-num">4</div>
+  <div class="scenario-title">Developer Productivity with Claude</div>
+  <div class="scenario-desc">Build tools to explore codebases, understand legacy systems, generate boilerplate. Uses built-in tools (Read, Write, Bash, Grep, Glob) + MCP servers.</div>
+  <div class="tags"><span class="tag tag-d2">D2: Tool Design 18%</span><span class="tag tag-d3">D3: Claude Code Config 20%</span><span class="tag tag-d1">D1: Agentic Architecture 27%</span></div>
+</div>
+
+<h3>Topics You'll Be Tested On:</h3>
+<div class="topic"><strong>Grep vs Glob:</strong> Grep = search file CONTENTS (find function callers). Glob = find files by NAME pattern (**.test.tsx).</div>
+<div class="topic"><strong>Incremental exploration:</strong> Grep → Read → trace flows. NOT reading all files upfront.</div>
+<div class="topic"><strong>Edit vs Read+Write:</strong> Edit for unique text matches. Read+Write fallback when Edit fails on non-unique text.</div>
+<div class="topic"><strong>MCP server config:</strong> .mcp.json (project) vs ~/.claude.json (personal). Env var expansion for secrets.</div>
+<div class="topic"><strong>Scratchpad files:</strong> For extended sessions when agent starts referencing "typical patterns" instead of discovered specifics.</div>
+<div class="topic"><strong>Subagent delegation:</strong> Spawn subagents for specific investigations while main agent coordinates.</div>
+</section>
+
+<!-- SCENARIO 5 -->
+<section class="section">
+<div class="scenario s5">
+  <div class="scenario-num">5</div>
+  <div class="scenario-title">Claude Code for CI/CD</div>
+  <div class="scenario-desc">Integrate Claude Code into CI/CD for automated code reviews, test generation, PR feedback. Design prompts for actionable feedback with minimal false positives.</div>
+  <div class="tags"><span class="tag tag-d3">D3: Claude Code Config 20%</span><span class="tag tag-d4">D4: Prompt Engineering 20%</span></div>
+</div>
+
+<h3>Topics You'll Be Tested On:</h3>
+<div class="topic"><strong>-p flag:</strong> Non-interactive mode. CLAUDE_HEADLESS and --batch DO NOT EXIST.</div>
+<div class="topic"><strong>--output-format json + --json-schema:</strong> Structured output for automated PR commenting.</div>
+<div class="topic"><strong>Avoiding duplicate comments:</strong> Include prior findings in context, instruct to report only new/unaddressed issues.</div>
+<div class="topic"><strong>False positive management:</strong> Explicit categorical criteria > "be conservative." Temporarily disable high-FP categories.</div>
+<div class="topic"><strong>Self-review limitation:</strong> Same session reviews own code = ineffective. Use independent review instance.</div>
+<div class="topic"><strong>Multi-pass review:</strong> Per-file local analysis + cross-file integration pass for large PRs (14+ files).</div>
+<div class="topic"><strong>Batch processing:</strong> Batch overnight reports (50% savings). Real-time for blocking pre-merge checks (no latency SLA).</div>
+</section>
+
+<!-- SCENARIO 6 -->
+<section class="section">
+<div class="scenario s6">
+  <div class="scenario-num">6</div>
+  <div class="scenario-title">Structured Data Extraction</div>
+  <div class="scenario-desc">Build extraction system using Claude. Extract from unstructured documents, validate with JSON schemas, maintain high accuracy. Handle edge cases gracefully.</div>
+  <div class="tags"><span class="tag tag-d4">D4: Prompt Engineering 20%</span><span class="tag tag-d5">D5: Context & Reliability 15%</span></div>
+</div>
+
+<h3>Topics You'll Be Tested On:</h3>
+<div class="topic"><strong>tool_use + JSON schema:</strong> Guaranteed syntax compliance. Eliminates JSON errors but NOT semantic errors.</div>
+<div class="topic"><strong>Nullable fields:</strong> Prevent hallucination by making absent-data fields nullable instead of required.</div>
+<div class="topic"><strong>Enum + "other" + detail:</strong> Extensible categorization with structured fallback.</div>
+<div class="topic"><strong>tool_choice options:</strong> "auto" (may return text), "any" (must call tool), forced (must call specific tool).</div>
+<div class="topic"><strong>Validation-retry loop:</strong> Send original doc + failed extraction + specific errors. Retries help for format errors, not missing data.</div>
+<div class="topic"><strong>Few-shot for varied formats:</strong> Examples showing extraction from inline citations vs bibliographies, narrative vs structured tables.</div>
+<div class="topic"><strong>Human review routing:</strong> Field-level confidence scores calibrated with labeled validation sets. Stratified sampling for error rate measurement.</div>
+<div class="topic"><strong>97% accuracy trap:</strong> Aggregate accuracy may mask poor performance on specific document types or fields. Always segment before automating.</div>
+</section>
+
+<section class="section">
+<div class="stag">Study Strategy</div>
+<h2>How to Prepare for Scenarios</h2>
+<div class="card">
+<div class="card-t">Prioritized Study Approach</div>
+<table>
+  <tr><th>Priority</th><th>Rationale</th><th>Action</th></tr>
+  <tr><td><strong>Scenarios 1 & 3</strong></td><td>Both test Domain 1 (27%) — highest weight domain</td><td>Build a working multi-tool agent + multi-agent research system</td></tr>
+  <tr><td><strong>Scenarios 2 & 5</strong></td><td>Both test Domain 3 (20%) — very Claude-specific knowledge</td><td>Configure a real project with full CLAUDE.md hierarchy + CI integration</td></tr>
+  <tr><td><strong>Scenario 6</strong></td><td>Tests Domain 4 (20%) — practical extraction skills</td><td>Build extraction pipeline with tool_use, validation, retry loop</td></tr>
+  <tr><td><strong>Scenario 4</strong></td><td>Tests built-in tool knowledge — quick to study</td><td>Practice Grep vs Glob selection, incremental codebase exploration</td></tr>
+</table>
+</div>
+
+<div class="info note">
+  <div class="info-l">Pro Tip</div>
+  When studying, build the ACTUAL systems described in each scenario. The exam tests practical judgment — you can't fake hands-on experience with multiple-choice guessing. Build a support agent with prerequisite hooks, configure Claude Code for a real project, create an extraction pipeline with validation-retry.
+</div>
+</section>
+
+</main>
+<footer class="footer"><p>CCA Foundations — Exam Scenarios Deep Dive · Prep Guide</p></footer>
+</body></html>
